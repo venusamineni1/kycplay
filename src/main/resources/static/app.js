@@ -11,8 +11,29 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         loadClientList();
         initSearch();
+        checkPermissions();
     }
 });
+
+async function checkPermissions() {
+    try {
+        const response = await fetch('/api/users/me');
+        if (response.ok) {
+            const user = await response.json();
+            const changesLink = document.getElementById('changesLink');
+            const userMgmtLink = document.querySelector('a[href="users.html"]');
+
+            if (changesLink) {
+                changesLink.style.display = (user.role === 'ADMIN' || user.role === 'AUDITOR') ? 'inline-block' : 'none';
+            }
+            if (userMgmtLink) {
+                userMgmtLink.style.display = (user.role === 'ADMIN') ? 'inline-block' : 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Permission check failed', e);
+    }
+}
 
 function initSearch() {
     const searchInput = document.getElementById('searchInput');

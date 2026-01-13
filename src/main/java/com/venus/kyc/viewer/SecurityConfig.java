@@ -18,6 +18,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests((authorize) -> authorize
                                                 .requestMatchers("/login.html", "/style.css").permitAll()
                                                 .requestMatchers("/users.html", "/api/users/**").hasRole("ADMIN")
+                                                .requestMatchers("/changes.html", "/api/clients/changes")
+                                                .hasAnyRole("ADMIN", "AUDITOR")
                                                 .anyRequest().authenticated())
                                 .formLogin(form -> form
                                                 .loginPage("/login.html")

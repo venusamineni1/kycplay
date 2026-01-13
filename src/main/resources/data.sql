@@ -28,6 +28,7 @@ VALUES (1, 'License', 'L-1234567', 'State Bar');
 
 INSERT INTO AppUsers (Username, Password, Role, Enabled) VALUES ('user', '{noop}password', 'USER', true);
 INSERT INTO AppUsers (Username, Password, Role, Enabled) VALUES ('admin', '{noop}admin', 'ADMIN', true);
+INSERT INTO AppUsers (Username, Password, Role, Enabled) VALUES ('auditor', '{noop}auditor', 'AUDITOR', true);
 
 INSERT INTO MaterialChanges (ChangeDate, ClientID, EntityID, EntityName, ColumnName, OperationType, OldValue, NewValue) VALUES
 ('2025-01-10 10:00:00', 1, 1, 'Client', 'Status', 'UPDATE', 'PENDING', 'ACTIVE'),
