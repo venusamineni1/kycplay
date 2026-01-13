@@ -19,6 +19,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/login.html", "/style.css").permitAll()
                                                 .requestMatchers("/users.html", "/api/users/**")
                                                 .hasAuthority("MANAGE_USERS")
+                                                .requestMatchers("/clients.html", "/details.html", "/api/clients/**")
+                                                .hasAuthority("VIEW_CLIENTS")
                                                 .requestMatchers("/changes.html", "/api/clients/changes")
                                                 .hasAuthority("VIEW_CHANGES")
                                                 .requestMatchers("/permissions.html", "/api/permissions/**")

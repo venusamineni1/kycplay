@@ -8,36 +8,75 @@ document.addEventListener('DOMContentLoaded', () => {
         loadRelatedPartyDetails();
     } else if (path.endsWith('changes.html')) {
         loadMaterialChanges();
+    } else if (path.endsWith('clients.html')) {
+        loadClientList();
+        initSearch();
     } else if (path.endsWith('permissions.html')) {
         initPermissionsPage();
     } else {
-        loadClientList();
-        initSearch();
         checkPermissions();
     }
 });
+
+let currentUserPermissions = [];
 
 async function checkPermissions() {
     try {
         const response = await fetch('/api/users/me');
         if (response.ok) {
             const user = await response.json();
+            currentUserPermissions = user.permissions || [];
+
             const changesLink = document.getElementById('changesLink');
             const permissionsLink = document.getElementById('permissionsLink');
             const userMgmtLink = document.querySelector('a[href="users.html"]');
 
+            // Dashboard cards
+            const clientsCard = document.getElementById('clientsCard');
+            const changesCard = document.getElementById('changesCard');
+            const usersCard = document.getElementById('usersCard');
+            const permissionsCard = document.getElementById('permissionsCard');
+
             if (changesLink) {
-                changesLink.style.display = (user.role === 'ADMIN' || user.role === 'AUDITOR') ? 'inline-block' : 'none';
+                changesLink.style.display = hasPermission('VIEW_CHANGES') ? 'inline-block' : 'none';
             }
             if (permissionsLink) {
-                permissionsLink.style.display = (user.role === 'ADMIN') ? 'inline-block' : 'none';
+                permissionsLink.style.display = hasPermission('MANAGE_PERMISSIONS') ? 'inline-block' : 'none';
             }
             if (userMgmtLink) {
-                userMgmtLink.style.display = (user.role === 'ADMIN') ? 'inline-block' : 'none';
+                userMgmtLink.style.display = hasPermission('MANAGE_USERS') ? 'inline-block' : 'none';
             }
+
+            if (clientsCard) {
+                clientsCard.style.display = hasPermission('VIEW_CLIENTS') ? 'block' : 'none';
+            }
+            if (changesCard) {
+                changesCard.style.display = hasPermission('VIEW_CHANGES') ? 'block' : 'none';
+            }
+            if (usersCard) {
+                usersCard.style.display = hasPermission('MANAGE_USERS') ? 'block' : 'none';
+            }
+            if (permissionsCard) {
+                permissionsCard.style.display = hasPermission('MANAGE_PERMISSIONS') ? 'block' : 'none';
+            }
+
+            // Also check for ad-hoc buttons in the page
+            updateActionButtons();
         }
     } catch (e) {
         console.error('Permission check failed', e);
+    }
+}
+
+function hasPermission(permission) {
+    return currentUserPermissions.includes(permission);
+}
+
+function updateActionButtons() {
+    // This will be called whenever permissions are loaded or UI changes
+    const addRPBtn = document.querySelector('.section-header button');
+    if (addRPBtn && addRPBtn.textContent.includes('Add Related Party')) {
+        addRPBtn.style.display = hasPermission('EDIT_CLIENTS') ? 'inline-block' : 'none';
     }
 }
 
@@ -192,6 +231,8 @@ async function loadClientDetails() {
             e.preventDefault();
             await saveRelatedParty(client.clientID);
         };
+
+        updateActionButtons();
     } catch (error) {
         console.error('Error loading client details:', error);
         content.innerHTML = `<p class="error">Error: ${error.message}</p>`;

@@ -12,18 +12,13 @@
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" style="max-width: 900px;">
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h1>Client Viewer</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+            <h1>KYC Dashboard</h1>
             <div style="display: flex; gap: 1rem;">
                 <a href="profile.html" class="back-link"
                     style="margin: 0; padding: 0.5rem; border-color: var(--glass-border); color: var(--text-color);">Profile</a>
-                <a href="users.html" class="back-link" style="margin: 0; padding: 0.5rem;">User Management</a>
-                <a href="changes.html" id="changesLink" class="back-link" style="margin: 0; padding: 0.5rem;">Material
-                    Changes</a>
-                <a href="permissions.html" id="permissionsLink" class="back-link"
-                    style="margin: 0; padding: 0.5rem;">Permissions</a>
                 <form action="/logout" method="post" style="display: inline;">
                     <button type="submit" class="back-link"
                         style="margin: 0; background: transparent; color: white; cursor: pointer;">Logout</button>
@@ -31,14 +26,46 @@
             </div>
         </div>
 
-        <div class="search-container" style="margin-bottom: 2rem;">
-            <input type="text" id="searchInput" placeholder="Search clients by name..."
-                style="width: 100%; padding: 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+        <div class="dashboard-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+
+            <a href="clients.html" id="clientsCard" class="glass-section"
+                style="text-decoration: none; transition: transform 0.2s; display: none;">
+                <h3 style="margin-top: 0; color: #4facfe;">Client Directory</h3>
+                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">View and manage client profiles, identities,
+                    and related parties.</p>
+            </a>
+
+            <a href="changes.html" id="changesCard" class="glass-section"
+                style="text-decoration: none; transition: transform 0.2s; display: none;">
+                <h3 style="margin-top: 0; color: #00f2fe;">Material Changes</h3>
+                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Audit trail for all material changes across
+                    client entities.</p>
+            </a>
+
+            <a href="users.html" id="usersCard" class="glass-section"
+                style="text-decoration: none; transition: transform 0.2s; display: none;">
+                <h3 style="margin-top: 0; color: #f093fb;">User Management</h3>
+                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Create users and manage role assignments.
+                </p>
+            </a>
+
+            <a href="permissions.html" id="permissionsCard" class="glass-section"
+                style="text-decoration: none; transition: transform 0.2s; display: none;">
+                <h3 style="margin-top: 0; color: #f6d365;">Role Permissions</h3>
+                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Configure fine-grained authorities for each
+                    system role.</p>
+            </a>
+
         </div>
 
-        <div id="content">
-            <p class="loading">Loading clients...</p>
-        </div>
+        <style>
+            .glass-section:hover {
+                transform: translateY(-5px);
+                background: rgba(255, 255, 255, 0.1) !important;
+                border-color: rgba(255, 255, 255, 0.2) !important;
+            }
+        </style>
     </div>
     <script src="app.js"></script>
 </body>

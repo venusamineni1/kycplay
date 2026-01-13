@@ -10,9 +10,11 @@ import java.util.List;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
 
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, PermissionRepository permissionRepository) {
         this.userRepository = userRepository;
+        this.permissionRepository = permissionRepository;
     }
 
     @GetMapping
@@ -75,7 +77,8 @@ public class UserController {
         String username = principal.getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(new UserInfo(user.username(), user.role()));
+        List<String> permissions = permissionRepository.findPermissionsByRole(user.role());
+        return ResponseEntity.ok(new UserInfo(user.username(), user.role(), permissions));
     }
 
     // Inner records for request bodies
@@ -85,6 +88,6 @@ public class UserController {
     public record RoleUpdateRequest(String role) {
     }
 
-    public record UserInfo(String username, String role) {
+    public record UserInfo(String username, String role, List<String> permissions) {
     }
 }
