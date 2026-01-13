@@ -1,0 +1,341 @@
+const API_BASE_URL = '/api/clients';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname;
+    if (path.endsWith('details.html')) {
+        loadClientDetails();
+    } else if (path.endsWith('related-party-details.html')) {
+        loadRelatedPartyDetails();
+    } else {
+        loadClientList();
+        initSearch();
+    }
+});
+
+function initSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let timeout = null;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                loadClientList(e.target.value);
+            }, 300); // Debounce
+        });
+    }
+}
+
+async function loadClientList(query = '') {
+    const contentDiv = document.getElementById('content');
+    try {
+        const url = query ? `${API_BASE_URL}/search?query=${encodeURIComponent(query)}` : API_BASE_URL;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch clients');
+
+        const clients = await response.json();
+
+        if (clients.length === 0) {
+            contentDiv.innerHTML = '<p>No clients found.</p>';
+            return;
+        }
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Onboarding Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        clients.forEach(client => {
+            html += `
+                <tr>
+                    <td>${client.clientID}</td>
+                    <td><a href="details.html?id=${client.clientID}">${client.firstName} ${client.lastName}</a></td>
+                    <td>${client.onboardingDate}</td>
+                    <td>${client.status}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        contentDiv.innerHTML = html;
+
+    } catch (error) {
+        console.error(error);
+        contentDiv.innerHTML = `<p class="error">Error loading clients: ${error.message}</p>`;
+    }
+}
+
+async function loadClientDetails() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const content = document.getElementById('content');
+
+    if (!id) {
+        content.innerHTML = '<p class="error">No client ID provided.</p>';
+        return;
+    }
+
+    try {
+        // Fetch User Role first
+        const userRes = await fetch('/api/users/me');
+        if (!userRes.ok) throw new Error('Not authenticated');
+        const userData = await userRes.json();
+        const userRole = userData.role;
+
+        // Fetch Client Details
+        const response = await fetch(`${API_BASE_URL}/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch client details');
+        const client = await response.json();
+
+        let html = `
+            <div class="client-detail">
+                <p><strong>Client ID:</strong> ${client.clientID}</p>
+                <p><strong>Title Prefix:</strong> ${client.titlePrefix || '-'}</p>
+                <p><strong>First Name:</strong> ${client.firstName}</p>
+                <p><strong>Middle Name:</strong> ${client.middleName || '-'}</p>
+                <p><strong>Last Name:</strong> ${client.lastName || '-'}</p>
+                <p><strong>Title Suffix:</strong> ${client.titleSuffix || '-'}</p>
+                <p><strong>Citizenship 1:</strong> ${client.citizenship1 || '-'}</p>
+                <p><strong>Citizenship 2:</strong> ${client.citizenship2 || '-'}</p>
+                <p><strong>Onboarding Date:</strong> ${client.onboardingDate}</p>
+                <p><strong>Status:</strong> ${client.status}</p>
+                
+                <div class="section-header">
+                    <h2>Related Parties</h2>
+                    <button class="btn" onclick="showAddRelatedPartyModal()">Add Related Party</button>
+                </div>
+                <div id="relatedPartiesContent">
+                    ${renderRelatedParties(client.relatedParties)}
+                </div>
+
+                ${renderAdminOnlySections(client, userRole)}
+
+                <div style="margin-top: 2rem;">
+                    <a href="index.html" class="back-link">← Back to List</a>
+                    <a href="/logout" class="back-link" style="margin-left: 10px;">Logout</a>
+                </div>
+            </div>
+            
+            <div id="addRelatedPartyModal" class="modal">
+                <div class="modal-content">
+                    <h2>Add Related Party</h2>
+                    <form id="addRelatedPartyForm">
+                        <div class="form-group">
+                            <label>Relation Type</label>
+                            <select id="rpRelationType" required>
+                                <option value="Legal representative">Legal representative</option>
+                                <option value="Power of Attorney">Power of Attorney</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group"><label>Title Prefix</label><input type="text" id="rpTitlePrefix"></div>
+                            <div class="form-group"><label>First Name</label><input type="text" id="rpFirstName" required></div>
+                            <div class="form-group"><label>Middle Name</label><input type="text" id="rpMiddleName"></div>
+                            <div class="form-group"><label>Last Name</label><input type="text" id="rpLastName" required></div>
+                            <div class="form-group"><label>Title Suffix</label><input type="text" id="rpTitleSuffix"></div>
+                            <div class="form-group"><label>Citizenship 1</label><input type="text" id="rpCitizenship1"></div>
+                            <div class="form-group"><label>Citizenship 2</label><input type="text" id="rpCitizenship2"></div>
+                            <div class="form-group"><label>Status</label><input type="text" id="rpStatus" value="Active"></div>
+                        </div>
+                        <div style="margin-top: 1rem; text-align: right;">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddRelatedPartyModal()">Cancel</button>
+                            <button type="submit" class="btn">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        content.innerHTML = html;
+
+        document.getElementById('addRelatedPartyForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await saveRelatedParty(client.clientID);
+        };
+    } catch (error) {
+        console.error('Error loading client details:', error);
+        content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+function renderRelatedParties(parties) {
+    if (!parties || parties.length === 0) return '<p>No related parties found.</p>';
+
+    let html = '<table><thead><tr><th>Type</th><th>Name</th><th>Citizenship</th><th>Status</th></tr></thead><tbody>';
+    parties.forEach(p => {
+        html += `
+            <tr>
+                <td>${p.relationType}</td>
+                <td><a href="related-party-details.html?id=${p.relatedPartyID}">${p.titlePrefix || ''} ${p.firstName} ${p.middleName || ''} ${p.lastName} ${p.titleSuffix || ''}</a></td>
+                <td>${p.citizenship1 || ''}${p.citizenship2 ? ', ' + p.citizenship2 : ''}</td>
+                <td>${p.status}</td>
+            </tr>
+        `;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function renderAdminOnlySections(client, userRole) {
+    if (userRole !== 'ADMIN') return '';
+
+    let html = '';
+
+    // Addresses
+    html += `
+        <h2>Addresses</h2>
+        ${client.addresses && client.addresses.length > 0 ? `
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Street</th>
+                    <th>City</th>
+                    <th>Zip</th>
+                    <th>Country</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${client.addresses.map(addr => `
+                    <tr>
+                        <td>${addr.addressType}</td>
+                        <td>${addr.addressLine1} ${addr.addressLine2 || ''}</td>
+                        <td>${addr.city}</td>
+                        <td>${addr.zip}</td>
+                        <td>${addr.country}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        ` : '<p>No addresses found.</p>'}
+    `;
+
+    // Identifiers
+    html += `
+        <h2>Identifiers</h2>
+        ${client.identifiers && client.identifiers.length > 0 ? `
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Authority</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${client.identifiers.map(id => `
+                    <tr>
+                        <td>${id.identifierType}</td>
+                        <td>${id.identifierValue}</td>
+                        <td>${id.issuingAuthority}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        ` : '<p>No identifiers found.</p>'}
+    `;
+
+    return html;
+}
+
+function showAddRelatedPartyModal() {
+    document.getElementById('addRelatedPartyModal').style.display = 'block';
+}
+
+function hideAddRelatedPartyModal() {
+    document.getElementById('addRelatedPartyModal').style.display = 'none';
+    document.getElementById('addRelatedPartyForm').reset();
+}
+
+async function saveRelatedParty(clientID) {
+    const rp = {
+        relationType: document.getElementById('rpRelationType').value,
+        titlePrefix: document.getElementById('rpTitlePrefix').value,
+        firstName: document.getElementById('rpFirstName').value,
+        middleName: document.getElementById('rpMiddleName').value,
+        lastName: document.getElementById('rpLastName').value,
+        titleSuffix: document.getElementById('rpTitleSuffix').value,
+        citizenship1: document.getElementById('rpCitizenship1').value,
+        citizenship2: document.getElementById('rpCitizenship2').value,
+        status: document.getElementById('rpStatus').value,
+        onboardingDate: new Date().toISOString().split('T')[0]
+    };
+
+    try {
+        const response = await fetch(`/api/clients/${clientID}/related-parties`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(rp)
+        });
+
+        if (response.ok) {
+            hideAddRelatedPartyModal();
+            loadClientDetails(); // Reload to show the new party
+        } else {
+            alert('Failed to save related party');
+        }
+    } catch (error) {
+        console.error('Error saving related party:', error);
+        alert('Error saving related party');
+    }
+}
+
+async function loadRelatedPartyDetails() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const content = document.getElementById('content');
+
+    if (!id) {
+        content.innerHTML = '<p class="error">No related party ID provided.</p>';
+        return;
+    }
+
+    try {
+        // Fetch User Role first
+        const userRes = await fetch('/api/users/me');
+        if (!userRes.ok) throw new Error('Not authenticated');
+        const userData = await userRes.json();
+        const userRole = userData.role;
+
+        // Fetch Related Party Details
+        const response = await fetch(`/api/clients/related-parties/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch related party details');
+        const party = await response.json();
+
+        let html = `
+            <div class="client-detail">
+                <p><strong>Relation Type:</strong> ${party.relationType}</p>
+                <p><strong>Title Prefix:</strong> ${party.titlePrefix || '-'}</p>
+                <p><strong>First Name:</strong> ${party.firstName}</p>
+                <p><strong>Middle Name:</strong> ${party.middleName || '-'}</p>
+                <p><strong>Last Name:</strong> ${party.lastName || '-'}</p>
+                <p><strong>Title Suffix:</strong> ${party.titleSuffix || '-'}</p>
+                <p><strong>Citizenship 1:</strong> ${party.citizenship1 || '-'}</p>
+                <p><strong>Citizenship 2:</strong> ${party.citizenship2 || '-'}</p>
+                <p><strong>Status:</strong> ${party.status}</p>
+                
+                ${renderAdminOnlySections(party, userRole)}
+
+                <div style="margin-top: 2rem;">
+                    <a href="details.html?id=${party.clientID}" class="back-link">← Back to Client</a>
+                    <a href="/logout" class="back-link" style="margin-left: 10px;">Logout</a>
+                </div>
+            </div>
+        `;
+        content.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading related party details:', error);
+        content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Client Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: #0f2027;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="max-width: 500px;">
+        <h1>User Profile</h1>
+
+        <div id="status-msg"
+            style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;"></div>
+
+        <form id="passwordForm">
+            <div class="form-group">
+                <label for="oldPassword">Current Password</label>
+                <input type="password" id="oldPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input type="password" id="confirmPassword" required>
+            </div>
+            <button type="submit">Change Password</button>
+        </form>
+
+        <a href="index.html" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <script>
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const statusDiv = document.getElementById('status-msg');
+
+            if (newPassword !== confirmPassword) {
+                showStatus('New passwords do not match', true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/users/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+
+                if (response.ok) {
+                    showStatus('Password updated successfully', false);
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    const msg = await response.text();
+                    showStatus(msg || 'Failed to update password', true);
+                }
+            } catch (error) {
+                console.error(error);
+                showStatus('An error occurred', true);
+            }
+        });
+
+        function showStatus(message, isError) {
+            const el = document.getElementById('status-msg');
+            el.textContent = message;
+            el.style.display = 'block';
+            el.style.background = isError ? 'rgba(255, 107, 107, 0.2)' : 'rgba(46, 204, 113, 0.2)';
+            el.style.border = `1px solid ${isError ? '#ff6b6b' : '#2ecc71'}`;
+            el.style.color = isError ? '#ff6b6b' : '#2ecc71';
+        }
+    </script>
+</body>
+
+</html>
