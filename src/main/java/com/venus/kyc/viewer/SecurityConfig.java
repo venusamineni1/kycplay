@@ -17,9 +17,12 @@ public class SecurityConfig {
                 http
                                 .authorizeHttpRequests((authorize) -> authorize
                                                 .requestMatchers("/login.html", "/style.css").permitAll()
-                                                .requestMatchers("/users.html", "/api/users/**").hasRole("ADMIN")
+                                                .requestMatchers("/users.html", "/api/users/**")
+                                                .hasAuthority("MANAGE_USERS")
                                                 .requestMatchers("/changes.html", "/api/clients/changes")
-                                                .hasAnyRole("ADMIN", "AUDITOR")
+                                                .hasAuthority("VIEW_CHANGES")
+                                                .requestMatchers("/permissions.html", "/api/permissions/**")
+                                                .hasAuthority("MANAGE_PERMISSIONS")
                                                 .anyRequest().authenticated())
                                 .formLogin(form -> form
                                                 .loginPage("/login.html")

@@ -35,3 +35,15 @@ INSERT INTO MaterialChanges (ChangeDate, ClientID, EntityID, EntityName, ColumnN
 ('2025-01-11 11:30:00', 1, 1, 'Address', 'Street', 'UPDATE', '123 Fake St', '124 Fake St'),
 ('2025-01-12 09:15:00', 2, 2, 'Client', 'LastName', 'UPDATE', 'Smith', 'Smith-Jones'),
 ('2025-01-13 14:20:00', 3, 3, 'Identifier', 'IDValue', 'UPDATE', 'A1234568', 'A9999999');
+
+-- Role Permissions
+INSERT INTO RolePermissions (RoleName, Permission) VALUES 
+('ADMIN', 'VIEW_CLIENTS'),
+('ADMIN', 'EDIT_CLIENTS'),
+('ADMIN', 'VIEW_SENSITIVE_DATA'),
+('ADMIN', 'MANAGE_USERS'),
+('ADMIN', 'VIEW_CHANGES'),
+('ADMIN', 'MANAGE_PERMISSIONS'),
+('AUDITOR', 'VIEW_CLIENTS'),
+('AUDITOR', 'VIEW_CHANGES'),
+('USER', 'VIEW_CLIENTS');

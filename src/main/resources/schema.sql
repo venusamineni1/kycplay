@@ -89,3 +89,9 @@ CREATE TABLE IF NOT EXISTS MaterialChanges (
     NewValue TEXT,
     FOREIGN KEY (ClientID) REFERENCES Clients(ClientID)
 );
+
+CREATE TABLE IF NOT EXISTS RolePermissions (
+    RoleName VARCHAR(50) NOT NULL,
+    Permission VARCHAR(100) NOT NULL,
+    PRIMARY KEY (RoleName, Permission)
+);

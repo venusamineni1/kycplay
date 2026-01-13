@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadRelatedPartyDetails();
     } else if (path.endsWith('changes.html')) {
         loadMaterialChanges();
+    } else if (path.endsWith('permissions.html')) {
+        initPermissionsPage();
     } else {
         loadClientList();
         initSearch();
@@ -21,10 +23,14 @@ async function checkPermissions() {
         if (response.ok) {
             const user = await response.json();
             const changesLink = document.getElementById('changesLink');
+            const permissionsLink = document.getElementById('permissionsLink');
             const userMgmtLink = document.querySelector('a[href="users.html"]');
 
             if (changesLink) {
                 changesLink.style.display = (user.role === 'ADMIN' || user.role === 'AUDITOR') ? 'inline-block' : 'none';
+            }
+            if (permissionsLink) {
+                permissionsLink.style.display = (user.role === 'ADMIN') ? 'inline-block' : 'none';
             }
             if (userMgmtLink) {
                 userMgmtLink.style.display = (user.role === 'ADMIN') ? 'inline-block' : 'none';
@@ -414,5 +420,91 @@ async function loadMaterialChanges() {
     } catch (error) {
         console.error('Error loading material changes:', error);
         content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+async function initPermissionsPage() {
+    const roleSelector = document.getElementById('roleSelector');
+    const permissionsList = document.getElementById('permissionsList');
+    const permissionsGrid = document.getElementById('permissionsGrid');
+    const saveBtn = document.getElementById('savePermissionsBtn');
+
+    if (!roleSelector) return;
+
+    try {
+        // Load roles
+        const rolesRes = await fetch('/api/permissions/roles');
+        const roles = await rolesRes.json();
+        roles.forEach(role => {
+            const opt = document.createElement('option');
+            opt.value = role;
+            opt.textContent = role;
+            roleSelector.appendChild(opt);
+        });
+
+        // Load all permissions
+        const allPermsRes = await fetch('/api/permissions/all');
+        const allPermissions = await allPermsRes.json();
+
+        roleSelector.onchange = async () => {
+            const role = roleSelector.value;
+            if (!role) {
+                permissionsList.style.display = 'none';
+                return;
+            }
+
+            const rolePermsRes = await fetch(`/api/permissions/role/${role}`);
+            const rolePermissions = await rolePermsRes.json();
+
+            permissionsGrid.innerHTML = '';
+            allPermissions.forEach(perm => {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.gap = '0.5rem';
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = perm;
+                cb.checked = rolePermissions.includes(perm);
+                cb.id = `perm_${perm}`;
+
+                const label = document.createElement('label');
+                label.htmlFor = `perm_${perm}`;
+                label.textContent = perm;
+                label.style.marginBottom = '0';
+
+                div.appendChild(cb);
+                div.appendChild(label);
+                permissionsGrid.appendChild(div);
+            });
+
+            permissionsList.style.display = 'block';
+        };
+
+        saveBtn.onclick = async () => {
+            const role = roleSelector.value;
+            const selected = Array.from(permissionsGrid.querySelectorAll('input:checked')).map(cb => cb.value);
+
+            try {
+                const res = await fetch(`/api/permissions/role/${role}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ permissions: selected })
+                });
+                if (res.ok) {
+                    alert('Permissions updated successfully!');
+                } else {
+                    alert('Failed to update permissions');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error updating permissions');
+            }
+        };
+
+    } catch (e) {
+        console.error(e);
     }
 }

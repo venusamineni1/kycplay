@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository, PermissionRepository permissionRepository) {
         this.userRepository = userRepository;
+        this.permissionRepository = permissionRepository;
     }
 
     @Override
@@ -19,10 +21,17 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
+        java.util.List<String> permissions = permissionRepository.findPermissionsByRole(user.role());
+        String[] authorities = new String[permissions.size() + 1];
+        authorities[0] = "ROLE_" + user.role();
+        for (int i = 0; i < permissions.size(); i++) {
+            authorities[i + 1] = permissions.get(i);
+        }
+
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.username())
                 .password(user.password())
-                .roles(user.role()) // Simple role management
+                .authorities(authorities)
                 .disabled(!user.enabled())
                 .build();
     }
