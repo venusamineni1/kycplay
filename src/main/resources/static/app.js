@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadClientDetails();
     } else if (path.endsWith('related-party-details.html')) {
         loadRelatedPartyDetails();
+    } else if (path.endsWith('changes.html')) {
+        loadMaterialChanges();
     } else {
         loadClientList();
         initSearch();
@@ -336,6 +338,60 @@ async function loadRelatedPartyDetails() {
         content.innerHTML = html;
     } catch (error) {
         console.error('Error loading related party details:', error);
+        content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+async function loadMaterialChanges() {
+    const content = document.getElementById('content');
+    try {
+        const response = await fetch('/api/clients/changes');
+        if (!response.ok) throw new Error('Failed to fetch material changes');
+        const changes = await response.json();
+
+        if (changes.length === 0) {
+            content.innerHTML = '<p>No material changes found.</p>';
+            return;
+        }
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Change ID</th>
+                        <th>Date</th>
+                        <th>Client ID</th>
+                        <th>Entity ID</th>
+                        <th>Entity Name</th>
+                        <th>Column</th>
+                        <th>Operation</th>
+                        <th>Old Value</th>
+                        <th>New Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        changes.forEach(change => {
+            html += `
+                <tr>
+                    <td>${change.changeID}</td>
+                    <td>${new Date(change.changeDate).toLocaleString()}</td>
+                    <td>${change.clientID}</td>
+                    <td>${change.entityID}</td>
+                    <td>${change.entityName}</td>
+                    <td>${change.columnName}</td>
+                    <td>${change.operationType}</td>
+                    <td style="color: #ff5555;">${change.oldValue || '-'}</td>
+                    <td style="color: #55ff55;">${change.newValue || '-'}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        content.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading material changes:', error);
         content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
     }
 }

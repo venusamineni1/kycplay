@@ -15,9 +15,16 @@ import java.util.List;
 public class ClientController {
 
     private final ClientRepository clientRepository;
+    private final MaterialChangeRepository materialChangeRepository;
 
-    public ClientController(ClientRepository clientRepository) {
+    public ClientController(ClientRepository clientRepository, MaterialChangeRepository materialChangeRepository) {
         this.clientRepository = clientRepository;
+        this.materialChangeRepository = materialChangeRepository;
+    }
+
+    @GetMapping("/changes")
+    public List<MaterialChange> getMaterialChanges() {
+        return materialChangeRepository.findAll();
     }
 
     @GetMapping
