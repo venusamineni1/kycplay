@@ -17,7 +17,7 @@ public class ClientRepository {
 
         public List<Client> findAll() {
                 List<Client> clients = jdbcClient.sql(
-                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status FROM Clients")
+                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients")
                                 .query((rs, rowNum) -> new Client(
                                                 rs.getLong("ClientID"),
                                                 rs.getString("TitlePrefix"),
@@ -29,6 +29,19 @@ public class ClientRepository {
                                                 rs.getString("Citizenship2"),
                                                 rs.getDate("OnboardingDate").toLocalDate(),
                                                 rs.getString("Status"),
+                                                rs.getString("NameAtBirth"),
+                                                rs.getString("NickName"),
+                                                rs.getString("Gender"),
+                                                rs.getDate("DateOfBirth") != null
+                                                                ? rs.getDate("DateOfBirth").toLocalDate()
+                                                                : null,
+                                                rs.getString("Language"),
+                                                rs.getString("Occupation"),
+                                                rs.getString("CountryOfTax"),
+                                                rs.getString("SourceOfFundsCountry"),
+                                                rs.getString("FATCAStatus"),
+                                                rs.getString("CRSStatus"),
+                                                new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
@@ -38,6 +51,7 @@ public class ClientRepository {
                         client.addresses().addAll(fetchAddresses(client.clientID()));
                         client.identifiers().addAll(fetchIdentifiers(client.clientID()));
                         client.relatedParties().addAll(fetchRelatedParties(client.clientID()));
+                        client.accounts().addAll(fetchAccounts(client.clientID()));
                 }
 
                 return clients;
@@ -45,7 +59,7 @@ public class ClientRepository {
 
         public Optional<Client> findById(Long id) {
                 Optional<Client> clientOpt = jdbcClient.sql(
-                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status FROM Clients WHERE ClientID = :id")
+                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients WHERE ClientID = :id")
                                 .param("id", id)
                                 .query((rs, rowNum) -> new Client(
                                                 rs.getLong("ClientID"),
@@ -58,6 +72,19 @@ public class ClientRepository {
                                                 rs.getString("Citizenship2"),
                                                 rs.getDate("OnboardingDate").toLocalDate(),
                                                 rs.getString("Status"),
+                                                rs.getString("NameAtBirth"),
+                                                rs.getString("NickName"),
+                                                rs.getString("Gender"),
+                                                rs.getDate("DateOfBirth") != null
+                                                                ? rs.getDate("DateOfBirth").toLocalDate()
+                                                                : null,
+                                                rs.getString("Language"),
+                                                rs.getString("Occupation"),
+                                                rs.getString("CountryOfTax"),
+                                                rs.getString("SourceOfFundsCountry"),
+                                                rs.getString("FATCAStatus"),
+                                                rs.getString("CRSStatus"),
+                                                new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
@@ -68,6 +95,7 @@ public class ClientRepository {
                         client.addresses().addAll(fetchAddresses(id));
                         client.identifiers().addAll(fetchIdentifiers(id));
                         client.relatedParties().addAll(fetchRelatedParties(id));
+                        client.accounts().addAll(fetchAccounts(id));
                 }
 
                 return clientOpt;
@@ -75,15 +103,23 @@ public class ClientRepository {
 
         private List<Address> fetchAddresses(Long id) {
                 return jdbcClient.sql(
-                                "SELECT AddressID, AddressType, AddressLine1, AddressLine2, City, Zip, Country FROM ClientAddresses WHERE ClientID = :id")
+                                "SELECT AddressID, AddressType, AddressLine1, AddressLine2, City, Zip, Country, AddressNumber, AddressSupplement FROM ClientAddresses WHERE ClientID = :id")
                                 .param("id", id)
                                 .query(Address.class)
                                 .list();
         }
 
+        private List<Account> fetchAccounts(Long id) {
+                return jdbcClient.sql(
+                                "SELECT AccountID, AccountNumber, AccountStatus FROM Accounts WHERE ClientID = :id")
+                                .param("id", id)
+                                .query(Account.class)
+                                .list();
+        }
+
         private List<Identifier> fetchIdentifiers(Long id) {
                 return jdbcClient.sql(
-                                "SELECT IdentifierID, IdentifierType, IdentifierValue, IssuingAuthority FROM ClientIdentifiers WHERE ClientID = :id")
+                                "SELECT IdentifierID, IdentifierType, IdentifierValue, IssuingAuthority, IdentifierNumber FROM ClientIdentifiers WHERE ClientID = :id")
                                 .param("id", id)
                                 .query(Identifier.class)
                                 .list();
@@ -91,7 +127,7 @@ public class ClientRepository {
 
         private List<RelatedParty> fetchRelatedParties(Long clientID) {
                 List<RelatedParty> parties = jdbcClient.sql(
-                                "SELECT RelatedPartyID, ClientID, RelationType, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status FROM RelatedParties WHERE ClientID = :id")
+                                "SELECT RelatedPartyID, ClientID, RelationType, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM RelatedParties WHERE ClientID = :id")
                                 .param("id", clientID)
                                 .query((rs, rowNum) -> new RelatedParty(
                                                 rs.getLong("RelatedPartyID"),
@@ -108,18 +144,30 @@ public class ClientRepository {
                                                                 ? rs.getDate("OnboardingDate").toLocalDate()
                                                                 : null,
                                                 rs.getString("Status"),
+                                                rs.getString("NameAtBirth"),
+                                                rs.getString("NickName"),
+                                                rs.getString("Gender"),
+                                                rs.getDate("DateOfBirth") != null
+                                                                ? rs.getDate("DateOfBirth").toLocalDate()
+                                                                : null,
+                                                rs.getString("Language"),
+                                                rs.getString("Occupation"),
+                                                rs.getString("CountryOfTax"),
+                                                rs.getString("SourceOfFundsCountry"),
+                                                rs.getString("FATCAStatus"),
+                                                rs.getString("CRSStatus"),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
                                 .list();
 
                 for (RelatedParty party : parties) {
                         party.addresses().addAll(jdbcClient.sql(
-                                        "SELECT AddressID, AddressType, AddressLine1, AddressLine2, City, Zip, Country FROM RelatedPartyAddresses WHERE RelatedPartyID = :id")
+                                        "SELECT AddressID, AddressType, AddressLine1, AddressLine2, City, Zip, Country, AddressNumber, AddressSupplement FROM RelatedPartyAddresses WHERE RelatedPartyID = :id")
                                         .param("id", party.relatedPartyID())
                                         .query(Address.class)
                                         .list());
                         party.identifiers().addAll(jdbcClient.sql(
-                                        "SELECT IdentifierID, IdentifierType, IdentifierValue, IssuingAuthority FROM RelatedPartyIdentifiers WHERE RelatedPartyID = :id")
+                                        "SELECT IdentifierID, IdentifierType, IdentifierValue, IssuingAuthority, IdentifierNumber FROM RelatedPartyIdentifiers WHERE RelatedPartyID = :id")
                                         .param("id", party.relatedPartyID())
                                         .query(Identifier.class)
                                         .list());
@@ -129,7 +177,7 @@ public class ClientRepository {
 
         public void saveRelatedParty(Long clientID, RelatedParty rp) {
                 jdbcClient.sql(
-                                "INSERT INTO RelatedParties (ClientID, RelationType, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status) VALUES (:clientID, :relationType, :titlePrefix, :firstName, :middleName, :lastName, :titleSuffix, :citizenship1, :citizenship2, :onboardingDate, :status)")
+                                "INSERT INTO RelatedParties (ClientID, RelationType, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus) VALUES (:clientID, :relationType, :titlePrefix, :firstName, :middleName, :lastName, :titleSuffix, :citizenship1, :citizenship2, :onboardingDate, :status, :nameAtBirth, :nickName, :gender, :dateOfBirth, :language, :occupation, :countryOfTax, :sourceOfFundsCountry, :fatcaStatus, :crsStatus)")
                                 .param("clientID", clientID)
                                 .param("relationType", rp.relationType())
                                 .param("titlePrefix", rp.titlePrefix())
@@ -141,12 +189,22 @@ public class ClientRepository {
                                 .param("citizenship2", rp.citizenship2())
                                 .param("onboardingDate", rp.onboardingDate())
                                 .param("status", rp.status())
+                                .param("nameAtBirth", rp.nameAtBirth())
+                                .param("nickName", rp.nickName())
+                                .param("gender", rp.gender())
+                                .param("dateOfBirth", rp.dateOfBirth())
+                                .param("language", rp.language())
+                                .param("occupation", rp.occupation())
+                                .param("countryOfTax", rp.countryOfTax())
+                                .param("sourceOfFundsCountry", rp.sourceOfFundsCountry())
+                                .param("fatcaStatus", rp.fatcaStatus())
+                                .param("crsStatus", rp.crsStatus())
                                 .update();
         }
 
         public Optional<RelatedParty> findRelatedPartyById(Long id) {
                 Optional<RelatedParty> partyOpt = jdbcClient.sql(
-                                "SELECT RelatedPartyID, ClientID, RelationType, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status FROM RelatedParties WHERE RelatedPartyID = :id")
+                                "SELECT RelatedPartyID, ClientID, RelationType, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM RelatedParties WHERE RelatedPartyID = :id")
                                 .param("id", id)
                                 .query((rs, rowNum) -> new RelatedParty(
                                                 rs.getLong("RelatedPartyID"),
@@ -163,6 +221,18 @@ public class ClientRepository {
                                                                 ? rs.getDate("OnboardingDate").toLocalDate()
                                                                 : null,
                                                 rs.getString("Status"),
+                                                rs.getString("NameAtBirth"),
+                                                rs.getString("NickName"),
+                                                rs.getString("Gender"),
+                                                rs.getDate("DateOfBirth") != null
+                                                                ? rs.getDate("DateOfBirth").toLocalDate()
+                                                                : null,
+                                                rs.getString("Language"),
+                                                rs.getString("Occupation"),
+                                                rs.getString("CountryOfTax"),
+                                                rs.getString("SourceOfFundsCountry"),
+                                                rs.getString("FATCAStatus"),
+                                                rs.getString("CRSStatus"),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
                                 .optional();
@@ -170,12 +240,12 @@ public class ClientRepository {
                 if (partyOpt.isPresent()) {
                         RelatedParty party = partyOpt.get();
                         party.addresses().addAll(jdbcClient.sql(
-                                        "SELECT AddressID, AddressType, AddressLine1, AddressLine2, City, Zip, Country FROM RelatedPartyAddresses WHERE RelatedPartyID = :id")
+                                        "SELECT AddressID, AddressType, AddressLine1, AddressLine2, City, Zip, Country, AddressNumber, AddressSupplement FROM RelatedPartyAddresses WHERE RelatedPartyID = :id")
                                         .param("id", id)
                                         .query(Address.class)
                                         .list());
                         party.identifiers().addAll(jdbcClient.sql(
-                                        "SELECT IdentifierID, IdentifierType, IdentifierValue, IssuingAuthority FROM RelatedPartyIdentifiers WHERE RelatedPartyID = :id")
+                                        "SELECT IdentifierID, IdentifierType, IdentifierValue, IssuingAuthority, IdentifierNumber FROM RelatedPartyIdentifiers WHERE RelatedPartyID = :id")
                                         .param("id", id)
                                         .query(Identifier.class)
                                         .list());
@@ -186,7 +256,7 @@ public class ClientRepository {
         public List<Client> searchByName(String query) {
                 String likeQuery = "%" + query + "%";
                 List<Client> clients = jdbcClient.sql(
-                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status FROM Clients WHERE FirstName LIKE :query OR MiddleName LIKE :query OR LastName LIKE :query")
+                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients WHERE FirstName LIKE :query OR MiddleName LIKE :query OR LastName LIKE :query")
                                 .param("query", likeQuery)
                                 .query((rs, rowNum) -> new Client(
                                                 rs.getLong("ClientID"),
@@ -199,6 +269,19 @@ public class ClientRepository {
                                                 rs.getString("Citizenship2"),
                                                 rs.getDate("OnboardingDate").toLocalDate(),
                                                 rs.getString("Status"),
+                                                rs.getString("NameAtBirth"),
+                                                rs.getString("NickName"),
+                                                rs.getString("Gender"),
+                                                rs.getDate("DateOfBirth") != null
+                                                                ? rs.getDate("DateOfBirth").toLocalDate()
+                                                                : null,
+                                                rs.getString("Language"),
+                                                rs.getString("Occupation"),
+                                                rs.getString("CountryOfTax"),
+                                                rs.getString("SourceOfFundsCountry"),
+                                                rs.getString("FATCAStatus"),
+                                                rs.getString("CRSStatus"),
+                                                new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
@@ -208,6 +291,7 @@ public class ClientRepository {
                         client.addresses().addAll(fetchAddresses(client.clientID()));
                         client.identifiers().addAll(fetchIdentifiers(client.clientID()));
                         client.relatedParties().addAll(fetchRelatedParties(client.clientID()));
+                        client.accounts().addAll(fetchAccounts(client.clientID()));
                 }
 
                 return clients;

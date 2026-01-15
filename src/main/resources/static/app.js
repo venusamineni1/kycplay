@@ -1,16 +1,24 @@
 const API_BASE_URL = '/api/clients';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const path = window.location.pathname;
-    if (path.endsWith('details.html')) {
-        loadClientDetails();
+
+    // Check specific paths first before generic ones
+    if (path.endsWith('case-details.html')) {
+        await checkPermissions(); // Ensure permissions are loaded
+        loadCaseDetails();
     } else if (path.endsWith('related-party-details.html')) {
         loadRelatedPartyDetails();
+    } else if (path.endsWith('details.html')) {
+        await checkPermissions();
+        loadClientDetails();
     } else if (path.endsWith('changes.html')) {
         loadMaterialChanges();
     } else if (path.endsWith('clients.html')) {
         loadClientList();
         initSearch();
+    } else if (path.endsWith('cases.html')) {
+        loadCaseList();
     } else if (path.endsWith('permissions.html')) {
         initPermissionsPage();
     } else {
@@ -19,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let currentUserPermissions = [];
+let currentUserRole = '';
 
 async function checkPermissions() {
     try {
@@ -26,6 +35,7 @@ async function checkPermissions() {
         if (response.ok) {
             const user = await response.json();
             currentUserPermissions = user.permissions || [];
+            currentUserRole = user.role || '';
 
             const changesLink = document.getElementById('changesLink');
             const permissionsLink = document.getElementById('permissionsLink');
@@ -36,6 +46,7 @@ async function checkPermissions() {
             const changesCard = document.getElementById('changesCard');
             const usersCard = document.getElementById('usersCard');
             const permissionsCard = document.getElementById('permissionsCard');
+            const casesCard = document.getElementById('casesCard');
 
             if (changesLink) {
                 changesLink.style.display = hasPermission('VIEW_CHANGES') ? 'inline-block' : 'none';
@@ -58,6 +69,9 @@ async function checkPermissions() {
             }
             if (permissionsCard) {
                 permissionsCard.style.display = hasPermission('MANAGE_PERMISSIONS') ? 'block' : 'none';
+            }
+            if (casesCard) {
+                casesCard.style.display = hasPermission('MANAGE_CASES') ? 'block' : 'none';
             }
 
             // Also check for ad-hoc buttons in the page
@@ -168,16 +182,40 @@ async function loadClientDetails() {
 
         let html = `
             <div class="client-detail">
-                <p><strong>Client ID:</strong> ${client.clientID}</p>
-                <p><strong>Title Prefix:</strong> ${client.titlePrefix || '-'}</p>
-                <p><strong>First Name:</strong> ${client.firstName}</p>
-                <p><strong>Middle Name:</strong> ${client.middleName || '-'}</p>
-                <p><strong>Last Name:</strong> ${client.lastName || '-'}</p>
-                <p><strong>Title Suffix:</strong> ${client.titleSuffix || '-'}</p>
-                <p><strong>Citizenship 1:</strong> ${client.citizenship1 || '-'}</p>
-                <p><strong>Citizenship 2:</strong> ${client.citizenship2 || '-'}</p>
-                <p><strong>Onboarding Date:</strong> ${client.onboardingDate}</p>
-                <p><strong>Status:</strong> ${client.status}</p>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Client ID</strong><span>${client.clientID}</span></div>
+                    <div class="info-item"><strong>Status</strong><span>${client.status}</span></div>
+                    <div class="info-item"><strong>Onboarding Date</strong><span>${client.onboardingDate}</span></div>
+                    <div class="info-item"><strong>Gender</strong><span>${client.gender || '-'}</span></div>
+                </div>
+
+                <div class="section-header"><h2>Personal Information</h2></div>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Title Prefix</strong><span>${client.titlePrefix || '-'}</span></div>
+                    <div class="info-item"><strong>First Name</strong><span>${client.firstName}</span></div>
+                    <div class="info-item"><strong>Middle Name</strong><span>${client.middleName || '-'}</span></div>
+                    <div class="info-item"><strong>Last Name</strong><span>${client.lastName || '-'}</span></div>
+                    <div class="info-item"><strong>Title Suffix</strong><span>${client.titleSuffix || '-'}</span></div>
+                    <div class="info-item"><strong>Name at Birth</strong><span>${client.nameAtBirth || '-'}</span></div>
+                    <div class="info-item"><strong>Nick Name</strong><span>${client.nickName || '-'}</span></div>
+                    <div class="info-item"><strong>Date of Birth</strong><span>${client.dateOfBirth || '-'}</span></div>
+                </div>
+
+                <div class="section-header"><h2>Citizenship & Tax</h2></div>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Citizenship 1</strong><span>${client.citizenship1 || '-'}</span></div>
+                    <div class="info-item"><strong>Citizenship 2</strong><span>${client.citizenship2 || '-'}</span></div>
+                    <div class="info-item"><strong>Language</strong><span>${client.language || '-'}</span></div>
+                    <div class="info-item"><strong>Country of Tax</strong><span>${client.countryOfTax || '-'}</span></div>
+                    <div class="info-item"><strong>FATCA Status</strong><span>${client.fatcaStatus || '-'}</span></div>
+                    <div class="info-item"><strong>CRS Status</strong><span>${client.crsStatus || '-'}</span></div>
+                </div>
+
+                <div class="section-header"><h2>Professional & Funds</h2></div>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Occupation</strong><span>${client.occupation || '-'}</span></div>
+                    <div class="info-item"><strong>Source of Funds</strong><span>${client.sourceOfFundsCountry || '-'}</span></div>
+                </div>
                 
                 <div class="section-header">
                     <h2>Related Parties</h2>
@@ -213,8 +251,18 @@ async function loadClientDetails() {
                             <div class="form-group"><label>Middle Name</label><input type="text" id="rpMiddleName"></div>
                             <div class="form-group"><label>Last Name</label><input type="text" id="rpLastName" required></div>
                             <div class="form-group"><label>Title Suffix</label><input type="text" id="rpTitleSuffix"></div>
+                            <div class="form-group"><label>Name at Birth</label><input type="text" id="rpNameAtBirth"></div>
+                            <div class="form-group"><label>Nick Name</label><input type="text" id="rpNickName"></div>
+                            <div class="form-group"><label>Gender</label><input type="text" id="rpGender"></div>
+                            <div class="form-group"><label>Date of Birth</label><input type="date" id="rpDateOfBirth"></div>
                             <div class="form-group"><label>Citizenship 1</label><input type="text" id="rpCitizenship1"></div>
                             <div class="form-group"><label>Citizenship 2</label><input type="text" id="rpCitizenship2"></div>
+                            <div class="form-group"><label>Language</label><input type="text" id="rpLanguage"></div>
+                            <div class="form-group"><label>Occupation</label><input type="text" id="rpOccupation"></div>
+                            <div class="form-group"><label>Country of Tax</label><input type="text" id="rpCountryOfTax"></div>
+                            <div class="form-group"><label>Source of Funds Country</label><input type="text" id="rpSourceOfFundsCountry"></div>
+                            <div class="form-group"><label>FATCA Status</label><input type="text" id="rpFatcaStatus"></div>
+                            <div class="form-group"><label>CRS Status</label><input type="text" id="rpCrsStatus"></div>
                             <div class="form-group"><label>Status</label><input type="text" id="rpStatus" value="Active"></div>
                         </div>
                         <div style="margin-top: 1rem; text-align: right;">
@@ -226,6 +274,11 @@ async function loadClientDetails() {
             </div>
         `;
         content.innerHTML = html;
+
+        const actionsDiv = document.getElementById('clientActions');
+        if (actionsDiv && hasPermission('MANAGE_CASES')) {
+            actionsDiv.innerHTML = `<button class="btn" onclick="showCreateCaseModal(${client.clientID})">Create KYC Case</button>`;
+        }
 
         document.getElementById('addRelatedPartyForm').onsubmit = async (e) => {
             e.preventDefault();
@@ -271,6 +324,8 @@ function renderAdminOnlySections(client, userRole) {
                 <tr>
                     <th>Type</th>
                     <th>Street</th>
+                    <th>Number</th>
+                    <th>Supplement</th>
                     <th>City</th>
                     <th>Zip</th>
                     <th>Country</th>
@@ -281,6 +336,8 @@ function renderAdminOnlySections(client, userRole) {
                     <tr>
                         <td>${addr.addressType}</td>
                         <td>${addr.addressLine1} ${addr.addressLine2 || ''}</td>
+                        <td>${addr.addressNumber || '-'}</td>
+                        <td>${addr.addressSupplement || '-'}</td>
                         <td>${addr.city}</td>
                         <td>${addr.zip}</td>
                         <td>${addr.country}</td>
@@ -300,6 +357,7 @@ function renderAdminOnlySections(client, userRole) {
                 <tr>
                     <th>Type</th>
                     <th>Value</th>
+                    <th>Number</th>
                     <th>Authority</th>
                 </tr>
             </thead>
@@ -308,12 +366,36 @@ function renderAdminOnlySections(client, userRole) {
                     <tr>
                         <td>${id.identifierType}</td>
                         <td>${id.identifierValue}</td>
+                        <td>${id.identifierNumber || '-'}</td>
                         <td>${id.issuingAuthority}</td>
                     </tr>
                 `).join('')}
             </tbody>
         </table>
         ` : '<p>No identifiers found.</p>'}
+    `;
+
+    // Accounts
+    html += `
+        <h2>Accounts</h2>
+        ${client.accounts && client.accounts.length > 0 ? `
+        <table>
+            <thead>
+                <tr>
+                    <th>Account Number</th>
+                    <th>Account Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${client.accounts.map(acc => `
+                    <tr>
+                        <td>${acc.accountNumber}</td>
+                        <td>${acc.accountStatus}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        ` : '<p>No accounts found.</p>'}
     `;
 
     return html;
@@ -339,7 +421,17 @@ async function saveRelatedParty(clientID) {
         citizenship1: document.getElementById('rpCitizenship1').value,
         citizenship2: document.getElementById('rpCitizenship2').value,
         status: document.getElementById('rpStatus').value,
-        onboardingDate: new Date().toISOString().split('T')[0]
+        onboardingDate: new Date().toISOString().split('T')[0],
+        nameAtBirth: document.getElementById('rpNameAtBirth').value,
+        nickName: document.getElementById('rpNickName').value,
+        gender: document.getElementById('rpGender').value,
+        dateOfBirth: document.getElementById('rpDateOfBirth').value || null,
+        language: document.getElementById('rpLanguage').value,
+        occupation: document.getElementById('rpOccupation').value,
+        countryOfTax: document.getElementById('rpCountryOfTax').value,
+        sourceOfFundsCountry: document.getElementById('rpSourceOfFundsCountry').value,
+        fatcaStatus: document.getElementById('rpFatcaStatus').value,
+        crsStatus: document.getElementById('rpCrsStatus').value
     };
 
     try {
@@ -385,15 +477,40 @@ async function loadRelatedPartyDetails() {
 
         let html = `
             <div class="client-detail">
-                <p><strong>Relation Type:</strong> ${party.relationType}</p>
-                <p><strong>Title Prefix:</strong> ${party.titlePrefix || '-'}</p>
-                <p><strong>First Name:</strong> ${party.firstName}</p>
-                <p><strong>Middle Name:</strong> ${party.middleName || '-'}</p>
-                <p><strong>Last Name:</strong> ${party.lastName || '-'}</p>
-                <p><strong>Title Suffix:</strong> ${party.titleSuffix || '-'}</p>
-                <p><strong>Citizenship 1:</strong> ${party.citizenship1 || '-'}</p>
-                <p><strong>Citizenship 2:</strong> ${party.citizenship2 || '-'}</p>
-                <p><strong>Status:</strong> ${party.status}</p>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Relation Type</strong><span>${party.relationType}</span></div>
+                    <div class="info-item"><strong>Status</strong><span>${party.status}</span></div>
+                    <div class="info-item"><strong>Onboarding Date</strong><span>${party.onboardingDate || '-'}</span></div>
+                    <div class="info-item"><strong>Gender</strong><span>${party.gender || '-'}</span></div>
+                </div>
+
+                <div class="section-header"><h2>Personal Information</h2></div>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Title Prefix</strong><span>${party.titlePrefix || '-'}</span></div>
+                    <div class="info-item"><strong>First Name</strong><span>${party.firstName}</span></div>
+                    <div class="info-item"><strong>Middle Name</strong><span>${party.middleName || '-'}</span></div>
+                    <div class="info-item"><strong>Last Name</strong><span>${party.lastName || '-'}</span></div>
+                    <div class="info-item"><strong>Title Suffix</strong><span>${party.titleSuffix || '-'}</span></div>
+                    <div class="info-item"><strong>Name at Birth</strong><span>${party.nameAtBirth || '-'}</span></div>
+                    <div class="info-item"><strong>Nick Name</strong><span>${party.nickName || '-'}</span></div>
+                    <div class="info-item"><strong>Date of Birth</strong><span>${party.dateOfBirth || '-'}</span></div>
+                </div>
+
+                <div class="section-header"><h2>Citizenship & Tax</h2></div>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Citizenship 1</strong><span>${party.citizenship1 || '-'}</span></div>
+                    <div class="info-item"><strong>Citizenship 2</strong><span>${party.citizenship2 || '-'}</span></div>
+                    <div class="info-item"><strong>Language</strong><span>${party.language || '-'}</span></div>
+                    <div class="info-item"><strong>Country of Tax</strong><span>${party.countryOfTax || '-'}</span></div>
+                    <div class="info-item"><strong>FATCA Status</strong><span>${party.fatcaStatus || '-'}</span></div>
+                    <div class="info-item"><strong>CRS Status</strong><span>${party.crsStatus || '-'}</span></div>
+                </div>
+
+                <div class="section-header"><h2>Professional & Funds</h2></div>
+                <div class="case-info-grid">
+                    <div class="info-item"><strong>Occupation</strong><span>${party.occupation || '-'}</span></div>
+                    <div class="info-item"><strong>Source of Funds</strong><span>${party.sourceOfFundsCountry || '-'}</span></div>
+                </div>
                 
                 ${renderAdminOnlySections(party, userRole)}
 
@@ -547,5 +664,257 @@ async function initPermissionsPage() {
 
     } catch (e) {
         console.error(e);
+    }
+}
+
+async function loadCaseList() {
+    const content = document.getElementById('content');
+    try {
+        const res = await fetch('/api/cases');
+        const cases = await res.json();
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <th>Assigned</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        cases.forEach(c => {
+            html += `
+                <tr>
+                    <td>${c.caseID}</td>
+                    <td>${c.clientName}</td>
+                    <td><span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); padding: 0.2rem 0.5rem; border-radius: 4px;">${c.status}</span></td>
+                    <td>${c.reason}</td>
+                    <td>${c.assignedTo || '-'}</td>
+                    <td><a href="case-details.html?id=${c.caseID}" class="back-link" style="margin: 0; padding: 0.3rem 0.6rem;">Details</a></td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        content.innerHTML = html;
+    } catch (e) {
+        content.innerHTML = `<p class="error">Error loading cases: ${e.message}</p>`;
+    }
+}
+
+async function loadCaseDetails() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const caseId = urlParams.get('id');
+    const caseTitle = document.getElementById('caseTitle');
+    const caseInfo = document.getElementById('caseInfo');
+    const commentsList = document.getElementById('commentsList');
+    const docsList = document.getElementById('documentsList');
+
+    try {
+        const [caseRes, commentsRes, docsRes] = await Promise.all([
+            fetch(`/api/cases/${caseId}`),
+            fetch(`/api/cases/${caseId}/comments`),
+            fetch(`/api/cases/${caseId}/documents`)
+        ]);
+
+        const kycCase = await caseRes.json();
+        const comments = await commentsRes.json();
+        const docs = await docsRes.json();
+
+        caseTitle.textContent = `Case #${kycCase.caseID} - ${kycCase.clientName}`;
+        caseInfo.innerHTML = `
+            <div class="info-item"><strong>Case ID:</strong> <span>${kycCase.caseID}</span></div>
+            <div class="info-item"><strong>Client ID:</strong> <span>${kycCase.clientID}</span></div>
+            <div class="info-item"><strong>Client Name:</strong> <span>${kycCase.clientName}</span></div>
+            <div class="info-item"><strong>Reason:</strong> <span>${kycCase.reason}</span></div>
+            <div class="info-item"><strong>Status:</strong> <span class="status-badge">${kycCase.status}</span></div>
+            <div class="info-item"><strong>Assigned To:</strong> <span>${kycCase.assignedTo || 'Unassigned'}</span></div>
+            <div class="info-item"><strong>Created:</strong> <span>${new Date(kycCase.createdDate).toLocaleString()}</span></div>
+        `;
+
+        // Update workflow UI
+        document.querySelectorAll('.workflow-step').forEach(step => {
+            step.classList.remove('active');
+            if (step.dataset.step === kycCase.status) step.classList.add('active');
+        });
+
+        // Load Comments
+        commentsList.innerHTML = comments.map(c => `
+            <div class="comment-item">
+                <div class="meta">${c.userID} (${c.role}) - ${new Date(c.commentDate).toLocaleString()}</div>
+                <div>${c.commentText}</div>
+            </div>
+        `).join('') || '<p>No comments yet.</p>';
+
+        // Load Docs as Table
+        docsList.innerHTML = docs.length > 0 ? `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Name</th>
+                        <th>Uploaded By</th>
+                        <th>Uploaded On</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${docs.map(d => `
+                        <tr>
+                            <td><span class="status-badge">${d.category || 'Other'}</span></td>
+                            <td><a href="/api/cases/documents/${d.documentID}" target="_blank">${d.documentName}</a></td>
+                            <td>${d.uploadedBy || '-'}</td>
+                            <td>${new Date(d.uploadDate).toLocaleString()}</td>
+                            <td><small>${d.comment || '-'}</small></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        ` : '<p>No documents uploaded.</p>';
+
+        // Setup Modal logic
+        const uploadModal = document.getElementById('uploadModal');
+        const openBtn = document.getElementById('openUploadModalBtn');
+        const closeBtn = document.getElementById('closeUploadModalBtn');
+        const uploadForm = document.getElementById('uploadForm');
+
+        if (openBtn) {
+            openBtn.onclick = () => uploadModal.style.display = 'block';
+        }
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                uploadModal.style.display = 'none';
+                uploadForm.reset();
+            };
+        }
+
+        if (uploadForm) {
+            uploadForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const file = document.getElementById('fileInput').files[0];
+                const category = document.getElementById('docCategory').value;
+                const comment = document.getElementById('docComment').value;
+                await uploadDoc(caseId, file, category, comment);
+            };
+        }
+
+        // Setup Actions based on permissions
+        const requiredPerm = {
+            'KYC_ANALYST': 'APPROVE_CASES_STAGE1',
+            'KYC_REVIEWER': 'APPROVE_CASES_STAGE2',
+            'AFC_REVIEWER': 'APPROVE_CASES_STAGE3',
+            'ACO_REVIEWER': 'APPROVE_CASES_STAGE4'
+        }[kycCase.status];
+
+        const actionsDiv = document.querySelector('.actions');
+        if (actionsDiv) {
+            if (hasPermission(requiredPerm) || currentUserRole === 'ADMIN') {
+                actionsDiv.style.display = 'block';
+                document.getElementById('approveBtn').onclick = () => transitionCase(caseId, 'APPROVE');
+                document.getElementById('rejectBtn').onclick = () => transitionCase(caseId, 'REJECT');
+            } else {
+                actionsDiv.style.display = 'none';
+            }
+        }
+
+
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function transitionCase(id, action) {
+    const comment = document.getElementById('commentInput').value;
+    if (!comment) return alert('Comment is required for workflow actions');
+
+    try {
+        const res = await fetch(`/api/cases/${id}/transition`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, comment })
+        });
+        if (res.ok) {
+            location.reload();
+        } else {
+            alert('Action failed. Check permissions.');
+        }
+    } catch (e) {
+        alert('Error performing transition');
+    }
+}
+
+async function uploadDoc(caseId, file, category, comment) {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    formData.append('comment', comment);
+
+    try {
+        const res = await fetch(`/api/cases/${caseId}/documents`, {
+            method: 'POST',
+            body: formData
+        });
+        if (res.ok) {
+            location.reload();
+        } else {
+            alert('Upload failed. Check console for details.');
+        }
+    } catch (e) {
+        alert('Error uploading document');
+    }
+}
+
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+
+function showCreateCaseModal(clientID) {
+    const modal = document.getElementById('createCaseModal');
+    if (modal) {
+        // Clear previous state if any
+        const reasonField = document.getElementById('caseReason');
+        if (reasonField) reasonField.value = '';
+
+        // Store clientID in a way saveCase can access it
+        modal.dataset.clientId = clientID;
+        modal.style.display = 'block';
+    }
+}
+
+async function saveCase() {
+    const modal = document.getElementById('createCaseModal');
+    const clientID = modal.dataset.clientId;
+    const reason = document.getElementById('caseReason').value;
+
+    if (!reason) {
+        alert('Please provide a reason for the case');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/cases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientID, reason })
+        });
+        if (res.ok) {
+            const caseId = await res.json();
+            window.location.href = `case-details.html?id=${caseId}`;
+        } else {
+            alert('Failed to create case');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error creating case');
     }
 }

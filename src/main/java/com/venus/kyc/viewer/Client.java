@@ -13,7 +13,18 @@ public record Client(
         String citizenship2,
         LocalDate onboardingDate,
         String status,
+        String nameAtBirth,
+        String nickName,
+        String gender,
+        LocalDate dateOfBirth,
+        String language,
+        String occupation,
+        String countryOfTax,
+        String sourceOfFundsCountry,
+        String fatcaStatus,
+        String crsStatus,
         java.util.List<Address> addresses,
         java.util.List<Identifier> identifiers,
-        java.util.List<RelatedParty> relatedParties) {
+        java.util.List<RelatedParty> relatedParties,
+        java.util.List<Account> accounts) {
 }

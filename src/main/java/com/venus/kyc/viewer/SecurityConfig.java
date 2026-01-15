@@ -17,6 +17,7 @@ public class SecurityConfig {
                 http
                                 .authorizeHttpRequests((authorize) -> authorize
                                                 .requestMatchers("/login.html", "/style.css").permitAll()
+                                                .requestMatchers("/api/users/me").authenticated()
                                                 .requestMatchers("/users.html", "/api/users/**")
                                                 .hasAuthority("MANAGE_USERS")
                                                 .requestMatchers("/clients.html", "/details.html", "/api/clients/**")
@@ -25,6 +26,8 @@ public class SecurityConfig {
                                                 .hasAuthority("VIEW_CHANGES")
                                                 .requestMatchers("/permissions.html", "/api/permissions/**")
                                                 .hasAuthority("MANAGE_PERMISSIONS")
+                                                .requestMatchers("/cases.html", "/case-details.html", "/api/cases/**")
+                                                .hasAuthority("MANAGE_CASES")
                                                 .anyRequest().authenticated())
                                 .formLogin(form -> form
                                                 .loginPage("/login.html")

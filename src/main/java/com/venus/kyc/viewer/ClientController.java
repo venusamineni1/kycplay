@@ -89,9 +89,20 @@ public class ClientController {
                 client.citizenship2(),
                 client.onboardingDate(),
                 client.status(),
+                client.nameAtBirth(),
+                client.nickName(),
+                client.gender(),
+                client.dateOfBirth(),
+                client.language(),
+                client.occupation(),
+                client.countryOfTax(),
+                client.sourceOfFundsCountry(),
+                client.fatcaStatus(),
+                client.crsStatus(),
                 null, // Masked addresses
                 null, // Masked identifiers
-                null // Masked related parties
+                null, // Masked related parties
+                null // Masked accounts
         );
     }
 
@@ -109,6 +120,16 @@ public class ClientController {
                 party.citizenship2(),
                 party.onboardingDate(),
                 party.status(),
+                party.nameAtBirth(),
+                party.nickName(),
+                party.gender(),
+                party.dateOfBirth(),
+                party.language(),
+                party.occupation(),
+                party.countryOfTax(),
+                party.sourceOfFundsCountry(),
+                party.fatcaStatus(),
+                party.crsStatus(),
                 null, // Masked addresses
                 null // Masked identifiers
         );

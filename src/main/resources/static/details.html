@@ -13,9 +13,28 @@
 
 <body>
     <div class="container">
-        <h1>Client Details</h1>
+        <div class="section-header">
+            <h1>Client Details</h1>
+            <div id="clientActions"></div>
+        </div>
         <div id="content">
             <p class="loading">Loading details...</p>
+        </div>
+
+        <!-- Create Case Modal -->
+        <div id="createCaseModal" class="modal">
+            <div class="modal-content">
+                <h2>Create KYC Case</h2>
+                <div class="form-group">
+                    <label for="caseReason">Reason for opening case</label>
+                    <textarea id="caseReason" rows="4"
+                        style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 4px; color: white; padding: 0.5rem;"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="closeModal('createCaseModal')">Cancel</button>
+                    <button class="btn" onclick="saveCase()">Create Case</button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="app.js"></script>
