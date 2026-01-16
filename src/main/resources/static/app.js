@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 let currentUserPermissions = [];
 let currentUserRole = '';
 
+// Global data for export
+let currentClientsData = [];
+let currentChangesData = [];
+
 async function checkPermissions() {
     try {
         const response = await fetch('/api/users/me');
@@ -101,23 +105,55 @@ function initSearch() {
         searchInput.addEventListener('input', (e) => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                loadClientList(e.target.value);
+                loadClientList(e.target.value, 0); // Reset to page 0 on search
             }, 300); // Debounce
         });
     }
 }
 
-async function loadClientList(query = '') {
+function renderPagination(containerId, data, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (data.totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = `
+        <button class="pagination-btn" ${data.currentPage === 0 ? 'disabled' : ''} onclick="window.${onPageChange}(${data.currentPage - 1})">Previous</button>
+        <span class="pagination-info">Page ${data.currentPage + 1} of ${data.totalPages}</span>
+        <button class="pagination-btn" ${data.currentPage >= data.totalPages - 1 ? 'disabled' : ''} onclick="window.${onPageChange}(${data.currentPage + 1})">Next</button>
+    `;
+    container.innerHTML = html;
+}
+
+async function loadClientList(query = '', page = 0) {
     const contentDiv = document.getElementById('content');
+    const exportBtn = document.getElementById('exportClientsBtn');
+
+    // Make it globally accessible for pagination buttons
+    window.loadClientPage = (p) => loadClientList(document.getElementById('searchInput')?.value || '', p);
+
+    if (exportBtn) {
+        exportBtn.onclick = () => exportToExcel(currentClientsData, 'Client_Directory.xlsx');
+    }
+
     try {
-        const url = query ? `${API_BASE_URL}/search?query=${encodeURIComponent(query)}` : API_BASE_URL;
+        let url = query
+            ? `${API_BASE_URL}/search?query=${encodeURIComponent(query)}&page=${page}`
+            : `${API_BASE_URL}?page=${page}`;
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch clients');
 
-        const clients = await response.json();
+        const data = await response.json();
+        const clients = data.content;
+        currentClientsData = clients; // Store for export
 
         if (clients.length === 0) {
             contentDiv.innerHTML = '<p>No clients found.</p>';
+            renderPagination('pagination', data, 'loadClientPage');
             return;
         }
 
@@ -151,6 +187,7 @@ async function loadClientList(query = '') {
         `;
 
         contentDiv.innerHTML = html;
+        renderPagination('pagination', data, 'loadClientPage');
 
     } catch (error) {
         console.error(error);
@@ -448,8 +485,37 @@ async function saveRelatedParty(clientID) {
             alert('Failed to save related party');
         }
     } catch (error) {
-        console.error('Error saving related party:', error);
-        alert('Error saving related party');
+        console.error('Error saving case:', error);
+        alert('Failed to save case: ' + error.message);
+    }
+}
+
+/**
+ * Utility function to export data to Excel using SheetJS
+ * @param {Array} data - Array of objects to export
+ * @param {string} filename - The name of the file to download
+ */
+function exportToExcel(data, filename) {
+    if (!data || data.length === 0) {
+        alert('No data available to export');
+        return;
+    }
+
+    try {
+        // Create a new workbook
+        const wb = XLSX.utils.book_new();
+
+        // Convert JSON data to worksheet
+        const ws = XLSX.utils.json_to_sheet(data);
+
+        // Append worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+        // Export the workbook
+        XLSX.writeFile(wb, filename);
+    } catch (error) {
+        console.error('Excel Export Error:', error);
+        alert('Failed to export Excel: ' + error.message);
     }
 }
 
@@ -527,15 +593,33 @@ async function loadRelatedPartyDetails() {
     }
 }
 
-async function loadMaterialChanges() {
+async function loadMaterialChanges(page = 0) {
     const content = document.getElementById('content');
+    const exportBtn = document.getElementById('exportChangesBtn');
+
+    const startDate = document.getElementById('startDate')?.value;
+    const endDate = document.getElementById('endDate')?.value;
+
+    window.loadChangesPage = (p) => loadMaterialChanges(p);
+
+    if (exportBtn) {
+        exportBtn.onclick = () => exportToExcel(currentChangesData, 'Material_Changes.xlsx');
+    }
+
     try {
-        const response = await fetch('/api/clients/changes');
+        let url = `/api/clients/changes?page=${page}`;
+        if (startDate) url += `&startDate=${startDate}`;
+        if (endDate) url += `&endDate=${endDate}`;
+
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch material changes');
-        const changes = await response.json();
+        const data = await response.json();
+        const changes = data.content;
+        currentChangesData = changes; // Store for export
 
         if (changes.length === 0) {
             content.innerHTML = '<p>No material changes found.</p>';
+            renderPagination('pagination', data, 'loadChangesPage');
             return;
         }
 
@@ -575,10 +659,19 @@ async function loadMaterialChanges() {
 
         html += '</tbody></table>';
         content.innerHTML = html;
+        renderPagination('pagination', data, 'loadChangesPage');
     } catch (error) {
         console.error('Error loading material changes:', error);
         content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
     }
+}
+
+function clearChangesFilter() {
+    const start = document.getElementById('startDate');
+    const end = document.getElementById('endDate');
+    if (start) start.value = '';
+    if (end) end.value = '';
+    loadMaterialChanges(0);
 }
 
 async function initPermissionsPage() {
@@ -916,5 +1009,90 @@ async function saveCase() {
     } catch (e) {
         console.error(e);
         alert('Error creating case');
+    }
+}
+
+/**
+ * Formats complex client data (nested arrays) into readable strings for Excel export
+ * @param {Array} clients - Array of client objects
+ * @returns {Array} Array of flattened client objects
+ */
+function flattenClientData(clients) {
+    return clients.map(client => {
+        const flat = { ...client };
+
+        // Flatten Addresses
+        if (Array.isArray(client.addresses)) {
+            flat.addresses = client.addresses.map(a =>
+                `${a.addressType}: ${a.addressLine1}${a.addressLine2 ? ', ' + a.addressLine2 : ''}, ${a.city}, ${a.country}`
+            ).join('; ');
+        } else {
+            flat.addresses = '-';
+        }
+
+        // Flatten Identifiers
+        if (Array.isArray(client.identifiers)) {
+            flat.identifiers = client.identifiers.map(i =>
+                `${i.identifierType}: ${i.identifierValue}${i.identifierNumber ? ' (No: ' + i.identifierNumber + ')' : ''} [${i.issuingAuthority}]`
+            ).join('; ');
+        } else {
+            flat.identifiers = '-';
+        }
+
+        // Flatten Related Parties
+        if (Array.isArray(client.relatedParties)) {
+            flat.relatedParties = client.relatedParties.map(p =>
+                `${p.relationType}: ${p.firstName} ${p.lastName} (${p.status})`
+            ).join('; ');
+        } else {
+            flat.relatedParties = '-';
+        }
+
+        // Flatten Accounts
+        if (Array.isArray(client.accounts)) {
+            flat.accounts = client.accounts.map(acc =>
+                `${acc.accountNumber} (${acc.accountStatus})`
+            ).join('; ');
+        } else {
+            flat.accounts = '-';
+        }
+
+        return flat;
+    });
+}
+
+/**
+ * Utility function to export data to Excel using SheetJS
+ * @param {Array} data - Array of objects to export
+ * @param {string} filename - The name of the file to download
+ */
+function exportToExcel(data, filename) {
+    if (!data || data.length === 0) {
+        alert('No data available to export');
+        return;
+    }
+
+    try {
+        let processedData = data;
+
+        // If it's client data, flatten the nested arrays first
+        if (filename.toLowerCase().includes('client')) {
+            processedData = flattenClientData(data);
+        }
+
+        // Create a new workbook
+        const wb = XLSX.utils.book_new();
+
+        // Convert JSON data to worksheet
+        const ws = XLSX.utils.json_to_sheet(processedData);
+
+        // Append worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+        // Export the workbook
+        XLSX.writeFile(wb, filename);
+    } catch (error) {
+        console.error('Excel Export Error:', error);
+        alert('Failed to export Excel: ' + error.message);
     }
 }

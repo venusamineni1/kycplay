@@ -9,18 +9,34 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
     <div class="container" style="max-width: 1200px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h1>Material Changes</h1>
-            <a href="index.html" class="back-link"
-                style="margin: 0; padding: 0.5rem; border-color: var(--glass-border); color: var(--text-color);">Home</a>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div class="filter-bar" style="display: flex; gap: 0.5rem; align-items: center; margin-right: 1rem;">
+                    <input type="date" id="startDate" class="form-group"
+                        style="width: auto; margin: 0; padding: 0.4rem;">
+                    <span>to</span>
+                    <input type="date" id="endDate" class="form-group" style="width: auto; margin: 0; padding: 0.4rem;">
+                    <button class="btn" onclick="loadMaterialChanges(0)" style="padding: 0.4rem 0.8rem;">Filter</button>
+                    <button class="btn btn-secondary" onclick="clearChangesFilter()"
+                        style="padding: 0.4rem 0.8rem;">Clear</button>
+                </div>
+                <button id="exportChangesBtn" class="back-link"
+                    style="margin: 0; padding: 0.5rem; background: rgba(85, 255, 85, 0.1); border-color: rgba(85, 255, 85, 0.3); color: #55ff55; cursor: pointer;">Export
+                    to Excel</button>
+                <a href="index.html" class="back-link"
+                    style="margin: 0; padding: 0.5rem; border-color: var(--glass-border); color: var(--text-color);">Home</a>
+            </div>
         </div>
         <div id="content">
             <p class="loading">Loading changes...</p>
         </div>
+        <div id="pagination" class="pagination-container"></div>
     </div>
     <script src="app.js"></script>
 </body>

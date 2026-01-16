@@ -16,8 +16,23 @@ public class ClientRepository {
         }
 
         public List<Client> findAll() {
+                return findAllPaginated(0, Integer.MAX_VALUE).content();
+        }
+
+        public long countClients() {
+                return jdbcClient.sql("SELECT COUNT(*) FROM Clients")
+                                .query(Long.class)
+                                .single();
+        }
+
+        public PaginatedResponse<Client> findAllPaginated(int page, int size) {
+                long totalElements = countClients();
+                int totalPages = (int) Math.ceil((double) totalElements / size);
+
                 List<Client> clients = jdbcClient.sql(
-                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients")
+                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients LIMIT :limit OFFSET :offset")
+                                .param("limit", size)
+                                .param("offset", page * size)
                                 .query((rs, rowNum) -> new Client(
                                                 rs.getLong("ClientID"),
                                                 rs.getString("TitlePrefix"),
@@ -54,7 +69,7 @@ public class ClientRepository {
                         client.accounts().addAll(fetchAccounts(client.clientID()));
                 }
 
-                return clients;
+                return new PaginatedResponse<>(clients, page, size, totalElements, totalPages);
         }
 
         public Optional<Client> findById(Long id) {
@@ -254,10 +269,28 @@ public class ClientRepository {
         }
 
         public List<Client> searchByName(String query) {
+                return searchByNamePaginated(query, 0, Integer.MAX_VALUE).content();
+        }
+
+        public long countSearchClients(String query) {
                 String likeQuery = "%" + query + "%";
-                List<Client> clients = jdbcClient.sql(
-                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients WHERE FirstName LIKE :query OR MiddleName LIKE :query OR LastName LIKE :query")
+                return jdbcClient.sql(
+                                "SELECT COUNT(*) FROM Clients WHERE FirstName LIKE :query OR MiddleName LIKE :query OR LastName LIKE :query")
                                 .param("query", likeQuery)
+                                .query(Long.class)
+                                .single();
+        }
+
+        public PaginatedResponse<Client> searchByNamePaginated(String query, int page, int size) {
+                String likeQuery = "%" + query + "%";
+                long totalElements = countSearchClients(query);
+                int totalPages = (int) Math.ceil((double) totalElements / size);
+
+                List<Client> clients = jdbcClient.sql(
+                                "SELECT ClientID, TitlePrefix, FirstName, MiddleName, LastName, TitleSuffix, Citizenship1, Citizenship2, OnboardingDate, Status, NameAtBirth, NickName, Gender, DateOfBirth, Language, Occupation, CountryOfTax, SourceOfFundsCountry, FATCAStatus, CRSStatus FROM Clients WHERE FirstName LIKE :query OR MiddleName LIKE :query OR LastName LIKE :query LIMIT :limit OFFSET :offset")
+                                .param("query", likeQuery)
+                                .param("limit", size)
+                                .param("offset", page * size)
                                 .query((rs, rowNum) -> new Client(
                                                 rs.getLong("ClientID"),
                                                 rs.getString("TitlePrefix"),
@@ -294,6 +327,6 @@ public class ClientRepository {
                         client.accounts().addAll(fetchAccounts(client.clientID()));
                 }
 
-                return clients;
+                return new PaginatedResponse<>(clients, page, size, totalElements, totalPages);
         }
 }

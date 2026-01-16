@@ -9,13 +9,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h1>Client Directory</h1>
-            <a href="index.html" class="back-link" style="margin: 0; padding: 0.5rem;">Dashboard</a>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button id="exportClientsBtn" class="back-link"
+                    style="margin: 0; padding: 0.5rem; background: rgba(85, 255, 85, 0.1); border-color: rgba(85, 255, 85, 0.3); color: #55ff55; cursor: pointer;">Export
+                    to Excel</button>
+                <a href="index.html" class="back-link" style="margin: 0; padding: 0.5rem;">Dashboard</a>
+            </div>
         </div>
 
         <div class="search-container" style="margin-bottom: 2rem;">
@@ -24,8 +30,9 @@
         </div>
 
         <div id="content">
-            <p class="loading">Loading clients...</p>
+            <!-- Client list will be loaded here -->
         </div>
+        <div id="pagination" class="pagination-container"></div>
     </div>
     <script src="app.js"></script>
 </body>

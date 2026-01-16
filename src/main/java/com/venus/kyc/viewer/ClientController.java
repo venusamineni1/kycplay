@@ -23,17 +23,26 @@ public class ClientController {
     }
 
     @GetMapping("/changes")
-    public List<MaterialChange> getMaterialChanges() {
-        return materialChangeRepository.findAll();
+    public PaginatedResponse<MaterialChange> getMaterialChanges(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String startDate,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String endDate) {
+        return materialChangeRepository.findAllPaginated(page, size, startDate, endDate);
     }
 
     @GetMapping
-    public List<Client> getAllClients(org.springframework.security.core.Authentication authentication) {
-        List<Client> clients = clientRepository.findAll();
+    public PaginatedResponse<Client> getAllClients(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size,
+            org.springframework.security.core.Authentication authentication) {
+        PaginatedResponse<Client> response = clientRepository.findAllPaginated(page, size);
         if (isAdmin(authentication)) {
-            return clients;
+            return response;
         }
-        return clients.stream().map(this::maskSensitiveData).toList();
+        List<Client> maskedContent = response.content().stream().map(this::maskSensitiveData).toList();
+        return new PaginatedResponse<>(maskedContent, response.currentPage(), response.pageSize(),
+                response.totalElements(), response.totalPages());
     }
 
     @GetMapping("/{id}")
@@ -61,13 +70,18 @@ public class ClientController {
     }
 
     @GetMapping("/search")
-    public List<Client> searchClients(@org.springframework.web.bind.annotation.RequestParam String query,
+    public PaginatedResponse<Client> searchClients(
+            @org.springframework.web.bind.annotation.RequestParam String query,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size,
             org.springframework.security.core.Authentication authentication) {
-        List<Client> clients = clientRepository.searchByName(query);
+        PaginatedResponse<Client> response = clientRepository.searchByNamePaginated(query, page, size);
         if (isAdmin(authentication)) {
-            return clients;
+            return response;
         }
-        return clients.stream().map(this::maskSensitiveData).toList();
+        List<Client> maskedContent = response.content().stream().map(this::maskSensitiveData).toList();
+        return new PaginatedResponse<>(maskedContent, response.currentPage(), response.pageSize(),
+                response.totalElements(), response.totalPages());
     }
 
     private boolean isAdmin(org.springframework.security.core.Authentication authentication) {
