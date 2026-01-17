@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Questionnaire Configuration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+        }
+
+        .q-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .q-item-info {
+            flex: 1;
+        }
+
+        .q-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="max-width: 900px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Questionnaire Configuration</h1>
+            <a href="index.html" class="back-link">Back to Dashboard</a>
+        </div>
+
+        <div id="adminContent">
+            <!-- Sections and Questions will be loaded here -->
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <button class="btn" onclick="showAddSectionModal()">+ Add New Section</button>
+        </div>
+    </div>
+
+    <!-- Add Section Modal -->
+    <div id="sectionModal" class="modal">
+        <div class="modal-content">
+            <h2 id="sectionModalTitle">Add Section</h2>
+            <form id="sectionForm">
+                <input type="hidden" id="sectionID">
+                <div class="form-group">
+                    <label>Section Name</label>
+                    <input type="text" id="sectionName" required>
+                </div>
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" id="sectionOrder" value="0" required>
+                </div>
+                <div style="margin-top: 1rem; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('sectionModal')">Cancel</button>
+                    <button type="submit" class="btn">Save Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Question Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="questionModalTitle">Add Question</h2>
+            <form id="questionForm">
+                <input type="hidden" id="qID">
+                <input type="hidden" id="qSectionID">
+                <div class="form-group">
+                    <label>Question Text</label>
+                    <textarea id="qText" required style="width: 100%; height: 80px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Question Type</label>
+                    <select id="qType" required onchange="toggleOptions()">
+                        <option value="TEXT">Text</option>
+                        <option value="YES_NO">Yes / No</option>
+                        <option value="MULTI_CHOICE">Multi Choice</option>
+                    </select>
+                </div>
+                <div class="form-group" id="optionsGroup" style="display: none;">
+                    <label>Options (comma separated)</label>
+                    <input type="text" id="qOptions">
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="qMandatory"> Is Mandatory?
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" id="qOrder" value="0" required>
+                </div>
+                <div style="margin-top: 1rem; text-align: right;">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('questionModal')">Cancel</button>
+                    <button type="submit" class="btn">Save Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

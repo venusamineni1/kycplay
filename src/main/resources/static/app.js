@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadCaseList();
     } else if (path.endsWith('permissions.html')) {
         initPermissionsPage();
+    } else if (path.endsWith('admin-questionnaire.html')) {
+        initAdminQuestionnaire();
     } else {
         checkPermissions();
     }
@@ -76,6 +78,10 @@ async function checkPermissions() {
             }
             if (casesCard) {
                 casesCard.style.display = hasPermission('MANAGE_CASES') ? 'block' : 'none';
+            }
+            const qCard = document.getElementById('questionnaireCard');
+            if (qCard) {
+                qCard.style.display = currentUserRole === 'ADMIN' ? 'block' : 'none';
             }
 
             // Also check for ad-hoc buttons in the page
@@ -916,7 +922,31 @@ async function loadCaseDetails() {
             }
         }
 
+        // Setup Questionnaire Modal logic
+        const questionnaireModal = document.getElementById('questionnaireModal');
+        const openQBtn = document.getElementById('openQuestionnaireBtn');
+        const closeQBtn = document.getElementById('closeQuestionnaireBtn');
+        const questionnaireForm = document.getElementById('questionnaireForm');
 
+        if (openQBtn) {
+            openQBtn.onclick = () => {
+                questionnaireModal.style.display = 'block';
+                loadQuestionnaire(caseId);
+            };
+        }
+        if (closeQBtn) {
+            closeQBtn.onclick = () => {
+                questionnaireModal.style.display = 'none';
+                questionnaireForm.reset();
+            };
+        }
+
+        if (questionnaireForm) {
+            questionnaireForm.onsubmit = async (e) => {
+                e.preventDefault();
+                await saveQuestionnaire(caseId);
+            };
+        }
 
     } catch (e) {
         console.error(e);
@@ -965,10 +995,297 @@ async function uploadDoc(caseId, file, category, comment) {
     }
 }
 
+async function loadQuestionnaire(caseId) {
+    const content = document.getElementById('questionnaireContent');
+    content.innerHTML = '<p>Loading questionnaire...</p>';
+
+    try {
+        const [templateRes, responsesRes] = await Promise.all([
+            fetch('/api/questionnaire/template'),
+            fetch(`/api/questionnaire/case/${caseId}`)
+        ]);
+
+        const template = await templateRes.json();
+        const responses = await responsesRes.json();
+
+        renderQuestionnaire(template, responses);
+    } catch (e) {
+        console.error(e);
+        content.innerHTML = '<p style="color: #ff5555;">Error loading questionnaire.</p>';
+    }
+}
+
+function renderQuestionnaire(template, responses) {
+    const content = document.getElementById('questionnaireContent');
+    const responseMap = new Map(responses.map(r => [r.questionID, r.answerText]));
+
+    let html = '';
+    template.forEach(section => {
+        html += `
+            <div class="q-section" style="margin-top: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">${section.sectionName}</h3>
+                <div class="q-questions">
+        `;
+
+        section.questions.forEach(q => {
+            const val = responseMap.get(q.questionID) || '';
+            const mandatoryAttr = q.isMandatory ? 'required' : '';
+            const mandatoryLabel = q.isMandatory ? '<span style="color: #ff5555;">*</span>' : '';
+
+            html += `
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        ${q.questionText} ${mandatoryLabel}
+                    </label>
+            `;
+
+            if (q.questionType === 'TEXT') {
+                html += `<input type="text" name="q_${q.questionID}" value="${val}" ${mandatoryAttr} style="width: 100%;" class="input">`;
+            } else if (q.questionType === 'YES_NO') {
+                html += `
+                    <div style="display: flex; gap: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="q_${q.questionID}" value="Yes" ${val === 'Yes' ? 'checked' : ''} ${mandatoryAttr}> Yes
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="q_${q.questionID}" value="No" ${val === 'No' ? 'checked' : ''} ${mandatoryAttr}> No
+                        </label>
+                    </div>
+                `;
+            } else if (q.questionType === 'MULTI_CHOICE') {
+                const options = q.options.split(',').map(o => o.trim());
+                html += `
+                    <select name="q_${q.questionID}" ${mandatoryAttr} style="width: 100%;">
+                        <option value="">-- Select Option --</option>
+                        ${options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+                    </select>
+                `;
+            }
+
+            html += `</div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    content.innerHTML = html;
+}
+
+async function saveQuestionnaire(caseId) {
+    const form = document.getElementById('questionnaireForm');
+    const formData = new FormData(form);
+    const responses = [];
+
+    // Map to keep track of processed question IDs (for YES_NO radios)
+    const processed = new Set();
+
+    for (let [name, value] of formData.entries()) {
+        if (name.startsWith('q_')) {
+            const questionID = parseInt(name.split('_')[1]);
+            responses.push({
+                questionID: questionID,
+                answerText: value
+            });
+            processed.add(questionID);
+        }
+    }
+
+    // Handle empty radio groups (if mandatory validation fails or optional radios)
+    // Actually, HTML5 'required' on radios handles mandatory groups.
+    // But we should ensure we get all values.
+
+    try {
+        const res = await fetch(`/api/questionnaire/case/${caseId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(responses)
+        });
+
+        if (res.ok) {
+            alert('Questionnaire saved successfully');
+            document.getElementById('questionnaireModal').style.display = 'none';
+        } else {
+            alert('Failed to save questionnaire');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Error saving questionnaire');
+    }
+}
+
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.style.display = 'none';
+}
+
+// Admin Questionnaire Management
+
+async function initAdminQuestionnaire() {
+    await checkPermissions();
+    if (currentUserRole !== 'ADMIN') {
+        window.location.href = 'index.html';
+        return;
+    }
+    loadAdminTemplate();
+
+    document.getElementById('sectionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const section = {
+            sectionID: document.getElementById('sectionID').value || null,
+            sectionName: document.getElementById('sectionName').value,
+            displayOrder: parseInt(document.getElementById('sectionOrder').value)
+        };
+        await saveAdminSection(section);
+    };
+
+    document.getElementById('questionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const q = {
+            questionID: document.getElementById('qID').value || null,
+            sectionID: parseInt(document.getElementById('qSectionID').value),
+            questionText: document.getElementById('qText').value,
+            questionType: document.getElementById('qType').value,
+            isMandatory: document.getElementById('qMandatory').checked,
+            options: document.getElementById('qOptions').value,
+            displayOrder: parseInt(document.getElementById('qOrder').value)
+        };
+        await saveAdminQuestion(q);
+    };
+}
+
+async function loadAdminTemplate() {
+    const content = document.getElementById('adminContent');
+    if (!content) return;
+    content.innerHTML = '<p>Loading template...</p>';
+
+    try {
+        const res = await fetch('/api/questionnaire/template');
+        const template = await res.json();
+
+        let html = '';
+        template.forEach(section => {
+            html += `
+                <div class="admin-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="color: var(--primary-color);">${section.sectionName} <small style="font-size: 0.6em; color: rgba(255,255,255,0.4)">#${section.sectionID} - order: ${section.displayOrder}</small></h2>
+                        <div class="q-item-actions">
+                            <button class="btn btn-secondary" style="padding: 0.3rem 0.6rem;" onclick="showEditSectionModal(${JSON.stringify(section).replace(/"/g, '&quot;')})">Edit</button>
+                            <button class="btn" style="padding: 0.3rem 0.6rem; background: #ff5555;" onclick="deleteAdminSection(${section.sectionID})">Delete</button>
+                        </div>
+                    </div>
+                    <div class="q-questions">
+                        ${section.questions.map(q => `
+                            <div class="q-item">
+                                <div class="q-item-info">
+                                    <strong>${q.questionText}</strong> <br>
+                                    <small>${q.questionType} ${q.isMandatory ? '(Mandatory)' : ''} ${q.options ? '- Options: ' + q.options : ''} - Order: ${q.displayOrder}</small>
+                                </div>
+                                <div class="q-item-actions">
+                                    <button class="btn btn-secondary" style="padding: 0.2rem 0.4rem;" onclick="showEditQuestionModal(${JSON.stringify(q).replace(/"/g, '&quot;')})">Edit</button>
+                                    <button class="btn" style="padding: 0.2rem 0.4rem; background: #ff5555;" onclick="deleteAdminQuestion(${q.questionID})">Delete</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <button class="btn btn-secondary" onclick="showAddQuestionModal(${section.sectionID})">+ Add Question</button>
+                    </div>
+                </div>
+            `;
+        });
+        content.innerHTML = html || '<p>No sections defined yet.</p>';
+    } catch (e) {
+        content.innerHTML = '<p class="error">Error loading template.</p>';
+    }
+}
+
+async function saveAdminSection(section) {
+    try {
+        const res = await fetch('/api/questionnaire/template/section', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(section)
+        });
+        if (res.ok) {
+            closeModal('sectionModal');
+            loadAdminTemplate();
+        } else { alert('Save failed'); }
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteAdminSection(id) {
+    if (!confirm('Are you sure? This will delete all questions in this section.')) return;
+    try {
+        const res = await fetch(`/api/questionnaire/template/section/${id}`, { method: 'DELETE' });
+        if (res.ok) loadAdminTemplate();
+    } catch (e) { alert('Error deleting section'); }
+}
+
+async function saveAdminQuestion(q) {
+    try {
+        const res = await fetch('/api/questionnaire/template/question', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(q)
+        });
+        if (res.ok) {
+            closeModal('questionModal');
+            loadAdminTemplate();
+        } else { alert('Save failed'); }
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteAdminQuestion(id) {
+    if (!confirm('Are you sure?')) return;
+    try {
+        const res = await fetch(`/api/questionnaire/template/question/${id}`, { method: 'DELETE' });
+        if (res.ok) loadAdminTemplate();
+    } catch (e) { alert('Error deleting question'); }
+}
+
+function showAddSectionModal() {
+    document.getElementById('sectionModalTitle').textContent = 'Add Section';
+    document.getElementById('sectionID').value = '';
+    document.getElementById('sectionForm').reset();
+    document.getElementById('sectionModal').style.display = 'block';
+}
+
+function showEditSectionModal(section) {
+    document.getElementById('sectionModalTitle').textContent = 'Edit Section';
+    document.getElementById('sectionID').value = section.sectionID;
+    document.getElementById('sectionName').value = section.sectionName;
+    document.getElementById('sectionOrder').value = section.displayOrder;
+    document.getElementById('sectionModal').style.display = 'block';
+}
+
+function showAddQuestionModal(sectionID) {
+    document.getElementById('questionModalTitle').textContent = 'Add Question';
+    document.getElementById('qID').value = '';
+    document.getElementById('qSectionID').value = sectionID;
+    document.getElementById('questionForm').reset();
+    toggleOptions();
+    document.getElementById('questionModal').style.display = 'block';
+}
+
+function showEditQuestionModal(q) {
+    document.getElementById('questionModalTitle').textContent = 'Edit Question';
+    document.getElementById('qID').value = q.questionID;
+    document.getElementById('qSectionID').value = q.sectionID;
+    document.getElementById('qText').value = q.questionText;
+    document.getElementById('qType').value = q.questionType;
+    document.getElementById('qOptions').value = q.options || '';
+    document.getElementById('qMandatory').checked = q.isMandatory;
+    document.getElementById('qOrder').value = q.displayOrder;
+    toggleOptions();
+    document.getElementById('questionModal').style.display = 'block';
+}
+
+function toggleOptions() {
+    const typeField = document.getElementById('qType');
+    if (!typeField) return;
+    const type = typeField.value;
+    document.getElementById('optionsGroup').style.display = (type === 'MULTI_CHOICE') ? 'block' : 'none';
 }
 
 function showCreateCaseModal(clientID) {

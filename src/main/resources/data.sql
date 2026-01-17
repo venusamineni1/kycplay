@@ -80,3 +80,22 @@ INSERT INTO CaseComments (CaseID, UserID, CommentText, Role) VALUES
 (1, 'analyst', 'Starting onboarding for Acme Corp.', 'KYC_ANALYST'),
 (2, 'analyst', 'Reviewing Globex Inc documents.', 'KYC_ANALYST'),
 (2, 'reviewer', 'Documents look valid, passing to AFC.', 'KYC_REVIEWER');
+
+-- Questionnaire Template
+INSERT INTO QuestionnaireSections (SectionName, DisplayOrder) VALUES 
+('Customer Identity', 1),
+('Source of Wealth', 2),
+('Risk Assessment', 3);
+
+INSERT INTO QuestionnaireQuestions (SectionID, QuestionText, QuestionType, IsMandatory, Options, DisplayOrder) VALUES 
+(1, 'Has the secondary ID been verified?', 'YES_NO', true, '', 1),
+(1, 'Residential address confirmation date?', 'TEXT', true, '', 2),
+(2, 'Main source of wealth?', 'MULTI_CHOICE', true, 'Salary,Inheritance,Investment,Other', 1),
+(3, 'Is the customer a PEP (Politically Exposed Person)?', 'YES_NO', true, '', 1),
+(3, 'Additional risk comments', 'TEXT', false, '', 2);
+
+-- Sample Responses for Case 1
+INSERT INTO CaseQuestionnaireResponses (CaseID, QuestionID, AnswerText) VALUES 
+(1, 1, 'Yes'),
+(1, 2, '2023-10-01'),
+(1, 3, 'Salary');

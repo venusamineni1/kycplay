@@ -63,42 +63,39 @@
             <div class="workflow-step" data-step="APPROVED">Final Sign-off</div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-            <div>
-                <div class="glass-section">
-                    <h3>Case Information</h3>
-                    <div id="caseInfo" class="case-info-grid">
-                        <!-- Info will be populated here -->
-                    </div>
-                </div>
-
-                <div class="glass-section" style="margin-top: 1.5rem;">
-                    <h3>Comments</h3>
-                    <div id="commentsList" style="max-height: 300px; overflow-y: auto;"></div>
-                    <div style="margin-top: 1rem;">
-                        <textarea id="commentInput" placeholder="Add a comment..."
-                            style="width: 100%; height: 80px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.5rem;"></textarea>
-                        <div class="actions"
-                            style="margin-top: 0.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            <button class="btn" id="rejectBtn" style="background: #ff5555;">Reject</button>
-                            <button class="btn" id="approveBtn">Approve / Forward</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <div class="glass-section">
-                    <h3>Actions</h3>
-                    <button class="btn" id="openUploadModalBtn" style="width: 100%;">Upload Document</button>
-                </div>
+        <div class="glass-section">
+            <h3>Case Information</h3>
+            <div id="caseInfo" class="case-info-grid">
+                <!-- Info will be populated here -->
             </div>
         </div>
 
-        <div class="glass-section" style="margin-top: 2rem;">
+        <div class="glass-section" style="margin-top: 1.5rem;">
             <h3>Uploaded Documents</h3>
             <div id="documentsList">
                 <!-- Table will be populated here -->
+            </div>
+        </div>
+
+        <div class="glass-section" style="margin-top: 1.5rem;">
+            <h3>Actions</h3>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn" id="openUploadModalBtn" style="width: auto;">Upload Document</button>
+                <button class="btn" id="openQuestionnaireBtn"
+                    style="width: auto; background: var(--secondary-color);">Questionnaire</button>
+            </div>
+        </div>
+
+        <div class="glass-section" style="margin-top: 1.5rem;">
+            <h3>Comments</h3>
+            <div id="commentsList" style="max-height: 400px; overflow-y: auto;"></div>
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+                <textarea id="commentInput" placeholder="Add a comment..."
+                    style="width: 100%; height: 100px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.8rem; font-family: inherit; margin-bottom: 1rem;"></textarea>
+                <div class="actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button class="btn" id="rejectBtn" style="background: #ff5555;">Reject</button>
+                    <button class="btn" id="approveBtn">Approve / Forward</button>
+                </div>
             </div>
         </div>
     </div>
@@ -130,6 +127,23 @@
                 <div style="margin-top: 1rem; text-align: right;">
                     <button type="button" class="btn btn-secondary" id="closeUploadModalBtn">Cancel</button>
                     <button type="submit" class="btn">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Questionnaire Modal -->
+    <div id="questionnaireModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <h2>Case Questionnaire</h2>
+            <form id="questionnaireForm">
+                <div id="questionnaireContent">
+                    <!-- Dynamic sections and questions will be here -->
+                </div>
+                <div
+                    style="margin-top: 2rem; text-align: right; position: sticky; bottom: 0; background: var(--glass-bg); padding: 1rem 0; border-top: 1px solid var(--glass-border);">
+                    <button type="button" class="btn btn-secondary" id="closeQuestionnaireBtn">Cancel</button>
+                    <button type="submit" class="btn">Save Responses</button>
                 </div>
             </form>
         </div>
