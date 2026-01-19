@@ -16,12 +16,20 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
             <h1>KYC Dashboard</h1>
-            <div style="display: flex; gap: 1rem;">
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <select id="themeSwitcher" class="back-link"
+                    style="margin: 0; padding: 0.4rem; border-color: var(--glass-border); background: var(--glass-bg); color: var(--text-color); cursor: pointer;">
+                    <option value="theme-midnight">Midnight (Blue)</option>
+                    <option value="theme-sunset">Sunset (Warm)</option>
+                    <option value="theme-emerald">Emerald (Teal)</option>
+                    <option value="theme-darkgray">Dark Gray (Mono)</option>
+                    <option value="theme-light">Light (Clean)</option>
+                </select>
                 <a href="profile.html" class="back-link"
                     style="margin: 0; padding: 0.5rem; border-color: var(--glass-border); color: var(--text-color);">Profile</a>
                 <form action="/logout" method="post" style="display: inline;">
                     <button type="submit" class="back-link"
-                        style="margin: 0; background: transparent; color: white; cursor: pointer;">Logout</button>
+                        style="margin: 0; background: transparent; color: var(--text-color); cursor: pointer;">Logout</button>
                 </form>
             </div>
         </div>
@@ -32,35 +40,35 @@
             <a href="clients.html" id="clientsCard" class="glass-section"
                 style="text-decoration: none; transition: transform 0.2s; display: none;">
                 <h3 style="margin-top: 0; color: #4facfe;">Client Directory</h3>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">View and manage client profiles, identities,
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">View and manage client profiles, identities,
                     and related parties.</p>
             </a>
 
             <a href="changes.html" id="changesCard" class="glass-section"
                 style="text-decoration: none; transition: transform 0.2s; display: none;">
                 <h3 style="margin-top: 0; color: #00f2fe;">Material Changes</h3>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Audit trail for all material changes across
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Audit trail for all material changes across
                     client entities.</p>
             </a>
 
             <a href="users.html" id="usersCard" class="glass-section"
                 style="text-decoration: none; transition: transform 0.2s; display: none;">
                 <h3 style="margin-top: 0; color: #f093fb;">User Management</h3>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Create users and manage role assignments.
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Create users and manage role assignments.
                 </p>
             </a>
 
             <a href="permissions.html" id="permissionsCard" class="glass-section"
                 style="text-decoration: none; transition: transform 0.2s; display: none;">
                 <h3 style="margin-top: 0; color: #f6d365;">Role Permissions</h3>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Configure fine-grained authorities for each
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Configure fine-grained authorities for each
                     system role.</p>
             </a>
 
             <a href="cases.html" id="casesCard" class="glass-section"
                 style="text-decoration: none; transition: transform 0.2s; display: none;">
                 <h3 style="margin-top: 0; color: #a1c4fd;">Case Manager</h3>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Manage KYC lifecycles, approvals, and
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Manage KYC lifecycles, approvals, and
                     document
                     verification.</p>
             </a>
@@ -68,7 +76,7 @@
             <a href="admin-questionnaire.html" id="questionnaireCard" class="glass-section"
                 style="text-decoration: none; transition: transform 0.2s; display: none;">
                 <h3 style="margin-top: 0; color: #ff9a9e;">Questionnaire Config</h3>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Manage questionnaire sections and questions
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Manage questionnaire sections and questions
                     for KYC cases.</p>
             </a>
 
@@ -77,8 +85,8 @@
         <style>
             .glass-section:hover {
                 transform: translateY(-5px);
-                background: rgba(255, 255, 255, 0.1) !important;
-                border-color: rgba(255, 255, 255, 0.2) !important;
+                background: var(--hover-bg) !important;
+                border-color: var(--glass-border) !important;
             }
         </style>
     </div>

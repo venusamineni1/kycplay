@@ -1,6 +1,25 @@
 const API_BASE_URL = '/api/clients';
 
+function initTheme() {
+    const savedTheme = localStorage.getItem('app-theme') || 'theme-midnight';
+    document.body.className = savedTheme;
+
+    const switcher = document.getElementById('themeSwitcher');
+    if (switcher) {
+        switcher.value = savedTheme;
+        switcher.addEventListener('change', (e) => {
+            switchTheme(e.target.value);
+        });
+    }
+}
+
+function switchTheme(themeName) {
+    document.body.className = themeName;
+    localStorage.setItem('app-theme', themeName);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    initTheme();
     const path = window.location.pathname;
 
     // Check specific paths first before generic ones
@@ -270,8 +289,15 @@ async function loadClientDetails() {
 
                 ${renderAdminOnlySections(client, userRole)}
 
+                <div class="section-header">
+                    <h2>Portfolios</h2>
+                </div>
+                <div id="portfoliosContent">
+                    ${renderPortfolios(client.portfolios)}
+                </div>
+
                 <div style="margin-top: 2rem;">
-                    <a href="index.html" class="back-link">← Back to List</a>
+                    <a href="clients.html" class="back-link">← Back to List</a>
                     <a href="/logout" class="back-link" style="margin-left: 10px;">Logout</a>
                 </div>
             </div>
@@ -346,6 +372,26 @@ function renderRelatedParties(parties) {
                 <td><a href="related-party-details.html?id=${p.relatedPartyID}">${p.titlePrefix || ''} ${p.firstName} ${p.middleName || ''} ${p.lastName} ${p.titleSuffix || ''}</a></td>
                 <td>${p.citizenship1 || ''}${p.citizenship2 ? ', ' + p.citizenship2 : ''}</td>
                 <td>${p.status}</td>
+            </tr>
+        `;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function renderPortfolios(portfolios) {
+    if (!portfolios || portfolios.length === 0) return '<p>No portfolios found.</p>';
+
+    let html = '<table><thead><tr><th>Portfolio ID</th><th>Account Number</th><th>Portfolio Text</th><th>Onboarding</th><th>Offboarding</th><th>Status</th></tr></thead><tbody>';
+    portfolios.forEach(p => {
+        html += `
+            <tr>
+                <td>${p.portfolioID}</td>
+                <td>${p.accountNumber || '-'}</td>
+                <td>${p.portfolioText}</td>
+                <td>${p.onboardingDate}</td>
+                <td>${p.offboardingDate || '-'}</td>
+                <td><span class="status-badge">${p.status}</span></td>
             </tr>
         `;
     });
@@ -828,13 +874,13 @@ async function loadCaseDetails() {
 
         caseTitle.textContent = `Case #${kycCase.caseID} - ${kycCase.clientName}`;
         caseInfo.innerHTML = `
-            <div class="info-item"><strong>Case ID:</strong> <span>${kycCase.caseID}</span></div>
-            <div class="info-item"><strong>Client ID:</strong> <span>${kycCase.clientID}</span></div>
-            <div class="info-item"><strong>Client Name:</strong> <span>${kycCase.clientName}</span></div>
-            <div class="info-item"><strong>Reason:</strong> <span>${kycCase.reason}</span></div>
-            <div class="info-item"><strong>Status:</strong> <span class="status-badge">${kycCase.status}</span></div>
-            <div class="info-item"><strong>Assigned To:</strong> <span>${kycCase.assignedTo || 'Unassigned'}</span></div>
-            <div class="info-item"><strong>Created:</strong> <span>${new Date(kycCase.createdDate).toLocaleString()}</span></div>
+            <div class="info-item"><strong>Case ID</strong><span>${kycCase.caseID}</span></div>
+            <div class="info-item"><strong>Client ID</strong><span>${kycCase.clientID}</span></div>
+            <div class="info-item"><strong>Client Name</strong><span>${kycCase.clientName}</span></div>
+            <div class="info-item" style="grid-column: 1 / -1;"><strong>Reason</strong><span>${kycCase.reason}</span></div>
+            <div class="info-item"><strong>Status</strong><span><span class="status-badge">${kycCase.status}</span></span></div>
+            <div class="info-item"><strong>Assigned To</strong><span>${kycCase.assignedTo || 'Unassigned'}</span></div>
+            <div class="info-item"><strong>Created</strong><span>${new Date(kycCase.createdDate).toLocaleString()}</span></div>
         `;
 
         // Update workflow UI
@@ -957,6 +1003,16 @@ async function transitionCase(id, action) {
     const comment = document.getElementById('commentInput').value;
     if (!comment) return alert('Comment is required for workflow actions');
 
+    if (action === 'APPROVE') {
+        const validation = await validateQuestionnaireCompletion(id);
+        if (!validation.valid) {
+            if (validation.error) {
+                return alert(validation.error);
+            }
+            return alert('Cannot forward case. The following mandatory questions are missing from the questionnaire:\n\n- ' + validation.missingQuestions.join('\n- '));
+        }
+    }
+
     try {
         const res = await fetch(`/api/cases/${id}/transition`, {
             method: 'POST',
@@ -970,6 +1026,44 @@ async function transitionCase(id, action) {
         }
     } catch (e) {
         alert('Error performing transition');
+    }
+}
+
+async function validateQuestionnaireCompletion(caseId) {
+    try {
+        const [templateRes, responsesRes] = await Promise.all([
+            fetch('/api/questionnaire/template'),
+            fetch(`/api/questionnaire/case/${caseId}`)
+        ]);
+
+        if (!templateRes.ok || !responsesRes.ok) {
+            throw new Error('Failed to fetch questionnaire data for validation');
+        }
+
+        const template = await templateRes.json();
+        const responses = await responsesRes.json();
+        const responseMap = new Map(responses.map(r => [r.questionID, r.answerText]));
+
+        const missingQuestions = [];
+
+        template.forEach(section => {
+            section.questions.forEach(q => {
+                if (q.isMandatory) {
+                    const answer = responseMap.get(q.questionID);
+                    if (!answer || answer.trim() === '') {
+                        missingQuestions.push(q.questionText);
+                    }
+                }
+            });
+        });
+
+        return {
+            valid: missingQuestions.length === 0,
+            missingQuestions: missingQuestions
+        };
+    } catch (e) {
+        console.error('Validation error:', e);
+        return { valid: false, error: 'Could not perform questionnaire validation.' };
     }
 }
 

@@ -59,6 +59,7 @@ public class ClientRepository {
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
+                                                new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
                                 .list();
 
@@ -67,6 +68,7 @@ public class ClientRepository {
                         client.identifiers().addAll(fetchIdentifiers(client.clientID()));
                         client.relatedParties().addAll(fetchRelatedParties(client.clientID()));
                         client.accounts().addAll(fetchAccounts(client.clientID()));
+                        client.portfolios().addAll(fetchPortfolios(client.clientID()));
                 }
 
                 return new PaginatedResponse<>(clients, page, size, totalElements, totalPages);
@@ -102,6 +104,7 @@ public class ClientRepository {
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
+                                                new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
                                 .optional();
 
@@ -111,6 +114,7 @@ public class ClientRepository {
                         client.identifiers().addAll(fetchIdentifiers(id));
                         client.relatedParties().addAll(fetchRelatedParties(id));
                         client.accounts().addAll(fetchAccounts(id));
+                        client.portfolios().addAll(fetchPortfolios(id));
                 }
 
                 return clientOpt;
@@ -129,6 +133,14 @@ public class ClientRepository {
                                 "SELECT AccountID, AccountNumber, AccountStatus FROM Accounts WHERE ClientID = :id")
                                 .param("id", id)
                                 .query(Account.class)
+                                .list();
+        }
+
+        private List<Portfolio> fetchPortfolios(Long id) {
+                return jdbcClient.sql(
+                                "SELECT PortfolioID, ClientID, AccountNumber, PortfolioText, OnboardingDate, OffboardingDate, Status FROM Portfolios WHERE ClientID = :id")
+                                .param("id", id)
+                                .query(Portfolio.class)
                                 .list();
         }
 
@@ -317,6 +329,7 @@ public class ClientRepository {
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>(),
+                                                new java.util.ArrayList<>(),
                                                 new java.util.ArrayList<>()))
                                 .list();
 
@@ -325,6 +338,7 @@ public class ClientRepository {
                         client.identifiers().addAll(fetchIdentifiers(client.clientID()));
                         client.relatedParties().addAll(fetchRelatedParties(client.clientID()));
                         client.accounts().addAll(fetchAccounts(client.clientID()));
+                        client.portfolios().addAll(fetchPortfolios(client.clientID()));
                 }
 
                 return new PaginatedResponse<>(clients, page, size, totalElements, totalPages);

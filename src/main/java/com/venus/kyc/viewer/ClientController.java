@@ -116,7 +116,8 @@ public class ClientController {
                 null, // Masked addresses
                 null, // Masked identifiers
                 null, // Masked related parties
-                null // Masked accounts
+                null, // Masked accounts
+                null // Masked portfolios
         );
     }
 

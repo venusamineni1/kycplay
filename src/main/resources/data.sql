@@ -99,3 +99,9 @@ INSERT INTO CaseQuestionnaireResponses (CaseID, QuestionID, AnswerText) VALUES
 (1, 1, 'Yes'),
 (1, 2, '2023-10-01'),
 (1, 3, 'Salary');
+
+INSERT INTO Portfolios (ClientID, AccountNumber, PortfolioText, OnboardingDate, OffboardingDate, Status) VALUES
+(1, 'ACC-1001', 'Global Equities Portfolio', '2023-02-01', NULL, 'Active'),
+(1, 'ACC-1002', 'Real Estate Fund', '2023-05-15', '2023-12-31', 'Closed'),
+(2, 'ACC-2001', 'Fixed Income Alpha', '2023-04-01', NULL, 'Active'),
+(3, 'ACC-3001', 'Venture Capital Tech', '2023-07-20', NULL, 'Active');

@@ -24,7 +24,7 @@
             border-radius: 4px;
             border: 1px solid var(--glass-border);
             background: rgba(0, 0, 0, 0.2);
-            color: white;
+            color: var(--text-color);
         }
 
         .action-btn {
@@ -66,10 +66,10 @@
         </table>
 
         <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
-            <a href="index.html" class="back-link">← Back to Clients</a>
+            <a href="clients.html" class="back-link">← Back to Clients</a>
             <form action="/logout" method="post" style="display: inline;">
                 <button type="submit" class="back-link"
-                    style="background: transparent; color: white; cursor: pointer;">Logout</button>
+                    style="background: transparent; color: var(--text-color); cursor: pointer;">Logout</button>
             </form>
         </div>
     </div>
@@ -88,7 +88,7 @@
                     <tr>
                         <td>${user.username}</td>
                         <td>
-                            <select onchange="updateRole('${user.username}', this.value)" style="padding: 0.2rem; border-radius: 4px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--glass-border);">
+                            <select onchange="updateRole('${user.username}', this.value)" style="padding: 0.2rem; border-radius: 4px; background: rgba(0,0,0,0.2); color: var(--text-color); border: 1px solid var(--glass-border);">
                                 <option value="USER" ${user.role === 'USER' ? 'selected' : ''}>USER</option>
                                 <option value="ADMIN" ${user.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
                             </select>

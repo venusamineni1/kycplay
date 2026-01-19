@@ -2,9 +2,44 @@
     --glass-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
     --text-color: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
     --background-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
     --primary-color: #00d4ff;
     --hover-bg: rgba(255, 255, 255, 0.15);
+    --header-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+body.theme-midnight {
+    --background-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    --primary-color: #00d4ff;
+}
+
+body.theme-sunset {
+    --background-gradient: linear-gradient(135deg, #2c3e50, #fd746c);
+    --primary-color: #ff9a9e;
+}
+
+body.theme-emerald {
+    --background-gradient: linear-gradient(135deg, #0ba360, #3cba92);
+    --primary-color: #00f2fe;
+}
+
+body.theme-darkgray {
+    --background-gradient: linear-gradient(135deg, #2c3e50, #4b4b4b);
+    --primary-color: #ffffff;
+    --text-color: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-light {
+    --background-gradient: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    --primary-color: #333333;
+    --text-color: #000000;
+    --text-secondary: rgba(0, 0, 0, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.5);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --hover-bg: rgba(0, 0, 0, 0.05);
+    --header-shadow: none;
 }
 
 body {
@@ -33,10 +68,10 @@ body {
 
 h1,
 h2 {
-    text-align: center;
+    text-align: left;
     margin-bottom: 2rem;
     color: var(--primary-color);
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    text-shadow: var(--header-shadow);
 }
 
 table {
@@ -68,7 +103,7 @@ a {
 }
 
 a:hover {
-    color: #fff;
+    color: var(--text-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
@@ -151,7 +186,7 @@ a:hover {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
     border-radius: 4px;
-    color: white;
+    color: var(--text-color);
 }
 
 .btn {
@@ -173,7 +208,7 @@ a:hover {
 .btn-secondary {
     background: transparent;
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-color);
 }
 
 .section-header {
