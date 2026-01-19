@@ -19,9 +19,15 @@ body.theme-sunset {
     --primary-color: #ff9a9e;
 }
 
-body.theme-emerald {
-    --background-gradient: linear-gradient(135deg, #0ba360, #3cba92);
-    --primary-color: #00f2fe;
+body.theme-lightblue {
+    --background-gradient: linear-gradient(135deg, #e0f2fe, #7dd3fc);
+    --primary-color: #0369a1;
+    --text-color: #0c4a6e;
+    --text-secondary: rgba(12, 74, 110, 0.7);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(3, 105, 161, 0.2);
+    --hover-bg: rgba(3, 105, 161, 0.1);
+    --header-shadow: 0 0 10px rgba(3, 105, 161, 0.3);
 }
 
 body.theme-darkgray {

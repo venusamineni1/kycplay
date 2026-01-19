@@ -27,8 +27,17 @@ public class ClientController {
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size,
             @org.springframework.web.bind.annotation.RequestParam(required = false) String startDate,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String endDate,
+            @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "changeDate") String sortBy,
+            @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "DESC") String sortDir) {
+        return materialChangeRepository.findAllPaginated(page, size, startDate, endDate, sortBy, sortDir);
+    }
+
+    @GetMapping("/changes/export")
+    public List<MaterialChange> exportMaterialChanges(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String startDate,
             @org.springframework.web.bind.annotation.RequestParam(required = false) String endDate) {
-        return materialChangeRepository.findAllPaginated(page, size, startDate, endDate);
+        return materialChangeRepository.findAllForExport(startDate, endDate);
     }
 
     @GetMapping

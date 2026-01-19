@@ -15,7 +15,7 @@ public class MaterialChangeRepository {
     }
 
     public List<MaterialChange> findAll() {
-        return findAllPaginated(0, Integer.MAX_VALUE, null, null).content();
+        return findAllPaginated(0, Integer.MAX_VALUE, null, null, "changeDate", "DESC").content();
     }
 
     public long countChanges(String startDate, String endDate) {
@@ -36,9 +36,26 @@ public class MaterialChangeRepository {
         return query.query(Long.class).single();
     }
 
-    public PaginatedResponse<MaterialChange> findAllPaginated(int page, int size, String startDate, String endDate) {
+    public PaginatedResponse<MaterialChange> findAllPaginated(int page, int size, String startDate, String endDate,
+            String sortBy, String sortDir) {
         long totalElements = countChanges(startDate, endDate);
         int totalPages = (int) Math.ceil((double) totalElements / size);
+
+        // Sanitize sort column to prevent SQL injection
+        String sortColumn = "ChangeDate";
+        if (sortBy != null) {
+            sortColumn = switch (sortBy) {
+                case "changeID" -> "ChangeID";
+                case "changeDate" -> "ChangeDate";
+                case "clientID" -> "ClientID";
+                case "entityID" -> "EntityID";
+                case "entityName" -> "EntityName";
+                case "columnName" -> "ColumnName";
+                case "operationType" -> "OperationType";
+                default -> "ChangeDate";
+            };
+        }
+        String direction = "DESC".equalsIgnoreCase(sortDir) ? "DESC" : "ASC";
 
         String sql = "SELECT * FROM MaterialChanges WHERE 1=1";
         if (startDate != null && !startDate.isEmpty()) {
@@ -47,7 +64,7 @@ public class MaterialChangeRepository {
         if (endDate != null && !endDate.isEmpty()) {
             sql += " AND ChangeDate <= :endDate";
         }
-        sql += " ORDER BY ChangeDate DESC LIMIT :limit OFFSET :offset";
+        sql += " ORDER BY " + sortColumn + " " + direction + " LIMIT :limit OFFSET :offset";
 
         var query = jdbcClient.sql(sql)
                 .param("limit", size)
@@ -71,5 +88,34 @@ public class MaterialChangeRepository {
                 .list();
 
         return new PaginatedResponse<>(changes, page, size, totalElements, totalPages);
+    }
+
+    public List<MaterialChange> findAllForExport(String startDate, String endDate) {
+        String sql = "SELECT * FROM MaterialChanges WHERE 1=1";
+        if (startDate != null && !startDate.isEmpty()) {
+            sql += " AND ChangeDate >= :startDate";
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            sql += " AND ChangeDate <= :endDate";
+        }
+        sql += " ORDER BY ChangeDate DESC";
+
+        var query = jdbcClient.sql(sql);
+        if (startDate != null && !startDate.isEmpty())
+            query.param("startDate", startDate + " 00:00:00");
+        if (endDate != null && !endDate.isEmpty())
+            query.param("endDate", endDate + " 23:59:59");
+
+        return query.query((rs, rowNum) -> new MaterialChange(
+                rs.getLong("ChangeID"),
+                rs.getTimestamp("ChangeDate").toLocalDateTime(),
+                rs.getLong("ClientID"),
+                rs.getLong("EntityID"),
+                rs.getString("EntityName"),
+                rs.getString("ColumnName"),
+                rs.getString("OperationType"),
+                rs.getString("OldValue"),
+                rs.getString("NewValue")))
+                .list();
     }
 }

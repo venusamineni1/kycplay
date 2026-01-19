@@ -1,6 +1,8 @@
 const API_BASE_URL = '/api/clients';
 
-function initTheme() {
+let currentChangesSort = { column: 'changeDate', direction: 'DESC' };
+
+function initApp() {
     const savedTheme = localStorage.getItem('app-theme') || 'theme-midnight';
     document.body.className = savedTheme;
 
@@ -11,6 +13,8 @@ function initTheme() {
             switchTheme(e.target.value);
         });
     }
+    // Call checkPermissions here to ensure permissions are loaded early for all pages
+    checkPermissions();
 }
 
 function switchTheme(themeName) {
@@ -19,17 +23,17 @@ function switchTheme(themeName) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    initTheme();
+    initApp();
     const path = window.location.pathname;
 
     // Check specific paths first before generic ones
     if (path.endsWith('case-details.html')) {
-        await checkPermissions(); // Ensure permissions are loaded
+        // Permissions are already checked by initApp()
         loadCaseDetails();
     } else if (path.endsWith('related-party-details.html')) {
         loadRelatedPartyDetails();
     } else if (path.endsWith('details.html')) {
-        await checkPermissions();
+        // Permissions are already checked by initApp()
         loadClientDetails();
     } else if (path.endsWith('changes.html')) {
         loadMaterialChanges();
@@ -43,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (path.endsWith('admin-questionnaire.html')) {
         initAdminQuestionnaire();
     } else {
-        checkPermissions();
+        // No specific page logic, permissions already checked by initApp()
     }
 });
 
@@ -113,6 +117,10 @@ async function checkPermissions() {
 
 function hasPermission(permission) {
     return currentUserPermissions.includes(permission);
+}
+
+function isAdmin(role) {
+    return role === 'ADMIN';
 }
 
 function updateActionButtons() {
@@ -297,8 +305,7 @@ async function loadClientDetails() {
                 </div>
 
                 <div style="margin-top: 2rem;">
-                    <a href="clients.html" class="back-link">← Back to List</a>
-                    <a href="/logout" class="back-link" style="margin-left: 10px;">Logout</a>
+                    <!-- Back to List and Logout links removed from bottom -->
                 </div>
             </div>
             
@@ -343,10 +350,15 @@ async function loadClientDetails() {
             </div>
         `;
         content.innerHTML = html;
-
+        // Update Actions
         const actionsDiv = document.getElementById('clientActions');
-        if (actionsDiv && hasPermission('MANAGE_CASES')) {
-            actionsDiv.innerHTML = `<button class="btn" onclick="showCreateCaseModal(${client.clientID})">Create KYC Case</button>`;
+        if (actionsDiv) {
+            actionsDiv.innerHTML = `
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="clients.html" class="back-link" style="margin: 0; padding: 0.5rem 1rem;">← Back to List</a>
+                    ${isAdmin(userRole) ? `<button class="btn" onclick="showCreateCaseModal(${client.clientID})">Create KYC Case</button>` : ''}
+                </div>
+            `;
         }
 
         document.getElementById('addRelatedPartyForm').onsubmit = async (e) => {
@@ -542,34 +554,6 @@ async function saveRelatedParty(clientID) {
     }
 }
 
-/**
- * Utility function to export data to Excel using SheetJS
- * @param {Array} data - Array of objects to export
- * @param {string} filename - The name of the file to download
- */
-function exportToExcel(data, filename) {
-    if (!data || data.length === 0) {
-        alert('No data available to export');
-        return;
-    }
-
-    try {
-        // Create a new workbook
-        const wb = XLSX.utils.book_new();
-
-        // Convert JSON data to worksheet
-        const ws = XLSX.utils.json_to_sheet(data);
-
-        // Append worksheet to workbook
-        XLSX.utils.book_append_sheet(wb, ws, "Data");
-
-        // Export the workbook
-        XLSX.writeFile(wb, filename);
-    } catch (error) {
-        console.error('Excel Export Error:', error);
-        alert('Failed to export Excel: ' + error.message);
-    }
-}
 
 async function loadRelatedPartyDetails() {
     const params = new URLSearchParams(window.location.search);
@@ -653,13 +637,27 @@ async function loadMaterialChanges(page = 0) {
     const endDate = document.getElementById('endDate')?.value;
 
     window.loadChangesPage = (p) => loadMaterialChanges(p);
+    window.sortChanges = (col) => {
+        if (currentChangesSort.column === col) {
+            currentChangesSort.direction = currentChangesSort.direction === 'ASC' ? 'DESC' : 'ASC';
+        } else {
+            currentChangesSort.column = col;
+            currentChangesSort.direction = 'DESC';
+        }
+        loadMaterialChanges(0);
+    };
 
     if (exportBtn) {
-        exportBtn.onclick = () => exportToExcel(currentChangesData, 'Material_Changes.xlsx');
+        exportBtn.onclick = async () => {
+            const url = `/api/clients/changes/export?startDate=${startDate || ''}&endDate=${endDate || ''}`;
+            const response = await fetch(url);
+            const allData = await response.json();
+            exportToExcel(allData, 'Material_Changes_Full.xlsx');
+        };
     }
 
     try {
-        let url = `/api/clients/changes?page=${page}`;
+        let url = `/api/clients/changes?page=${page}&sortBy=${currentChangesSort.column}&sortDir=${currentChangesSort.direction}`;
         if (startDate) url += `&startDate=${startDate}`;
         if (endDate) url += `&endDate=${endDate}`;
 
@@ -679,13 +677,13 @@ async function loadMaterialChanges(page = 0) {
             <table>
                 <thead>
                     <tr>
-                        <th>Change ID</th>
-                        <th>Date</th>
-                        <th>Client ID</th>
-                        <th>Entity ID</th>
-                        <th>Entity Name</th>
-                        <th>Column</th>
-                        <th>Operation</th>
+                        <th onclick="sortChanges('changeID')" style="cursor:pointer">Change ID ${getSortIcon('changeID')}</th>
+                        <th onclick="sortChanges('changeDate')" style="cursor:pointer">Date ${getSortIcon('changeDate')}</th>
+                        <th onclick="sortChanges('clientID')" style="cursor:pointer">Client ID ${getSortIcon('clientID')}</th>
+                        <th onclick="sortChanges('entityID')" style="cursor:pointer">Entity ID ${getSortIcon('entityID')}</th>
+                        <th onclick="sortChanges('entityName')" style="cursor:pointer">Entity Name ${getSortIcon('entityName')}</th>
+                        <th onclick="sortChanges('columnName')" style="cursor:pointer">Column ${getSortIcon('columnName')}</th>
+                        <th onclick="sortChanges('operationType')" style="cursor:pointer">Operation ${getSortIcon('operationType')}</th>
                         <th>Old Value</th>
                         <th>New Value</th>
                     </tr>
@@ -1470,6 +1468,11 @@ function flattenClientData(clients) {
 
         return flat;
     });
+}
+
+function getSortIcon(col) {
+    if (currentChangesSort.column !== col) return '↕';
+    return currentChangesSort.direction === 'ASC' ? '↑' : '↓';
 }
 
 /**
