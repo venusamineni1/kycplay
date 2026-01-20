@@ -26,6 +26,20 @@ public class CaseRepository {
                 .list();
     }
 
+    public List<Case> findByClientId(Long clientID) {
+        return jdbcClient.sql("""
+                SELECT c.CaseID, c.ClientID, cl.FirstName || ' ' || cl.LastName as clientName,
+                       c.CreatedDate, c.Reason, c.AssignedTo, c.Status
+                FROM Cases c
+                JOIN Clients cl ON c.ClientID = cl.ClientID
+                WHERE c.ClientID = :clientID
+                ORDER BY c.CreatedDate DESC
+                """)
+                .param("clientID", clientID)
+                .query(Case.class)
+                .list();
+    }
+
     public Optional<Case> findById(Long id) {
         return jdbcClient.sql("""
                 SELECT c.CaseID, c.ClientID, cl.FirstName || ' ' || cl.LastName as clientName,

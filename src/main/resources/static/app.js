@@ -250,6 +250,13 @@ async function loadClientDetails() {
         if (!response.ok) throw new Error('Failed to fetch client details');
         const client = await response.json();
 
+        // Fetch Related Cases
+        const casesRes = await fetch(`/api/cases/client/${id}`);
+        let relatedCases = [];
+        if (casesRes.ok) {
+            relatedCases = await casesRes.json();
+        }
+
         let html = `
             <div class="client-detail">
                 <div class="case-info-grid">
@@ -302,6 +309,13 @@ async function loadClientDetails() {
                 </div>
                 <div id="portfoliosContent">
                     ${renderPortfolios(client.portfolios)}
+                </div>
+
+                <div class="section-header">
+                    <h2>Related Cases</h2>
+                </div>
+                <div id="relatedCasesContent">
+                    ${renderRelatedCases(relatedCases)}
                 </div>
 
                 <div style="margin-top: 2rem;">
@@ -404,6 +418,25 @@ function renderPortfolios(portfolios) {
                 <td>${p.onboardingDate}</td>
                 <td>${p.offboardingDate || '-'}</td>
                 <td><span class="status-badge">${p.status}</span></td>
+            </tr>
+        `;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function renderRelatedCases(cases) {
+    if (!cases || cases.length === 0) return '<p>No related cases found.</p>';
+
+    let html = '<table><thead><tr><th>Case ID</th><th>Created Date</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
+    cases.forEach(c => {
+        html += `
+            <tr>
+                <td>${c.caseID}</td>
+                <td>${new Date(c.createdDate).toLocaleString()}</td>
+                <td><span class="status-badge" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); padding: 0.2rem 0.5rem; border-radius: 4px;">${c.status}</span></td>
+                <td>${c.reason}</td>
+                <td><a href="case-details.html?id=${c.caseID}" class="back-link" style="margin: 0; padding: 0.3rem 0.6rem;">Details</a></td>
             </tr>
         `;
     });

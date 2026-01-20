@@ -31,6 +31,11 @@ public class CaseController {
         return caseRepository.findById(id).orElseThrow();
     }
 
+    @GetMapping("/client/{clientID}")
+    public List<Case> getCasesByClient(@PathVariable Long clientID) {
+        return caseRepository.findByClientId(clientID);
+    }
+
     @GetMapping("/{id}/comments")
     public List<CaseComment> getComments(@PathVariable Long id) {
         return caseRepository.findCommentsByCaseId(id);
