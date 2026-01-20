@@ -381,7 +381,7 @@ function renderRelatedParties(parties) {
         html += `
             <tr>
                 <td>${p.relationType}</td>
-                <td><a href="related-party-details.html?id=${p.relatedPartyID}">${p.titlePrefix || ''} ${p.firstName} ${p.middleName || ''} ${p.lastName} ${p.titleSuffix || ''}</a></td>
+                <td><a href="javascript:void(0)" onclick="showRelatedPartyDetails(${p.relatedPartyID})">${p.titlePrefix || ''} ${p.firstName} ${p.middleName || ''} ${p.lastName} ${p.titleSuffix || ''}</a></td>
                 <td>${p.citizenship1 || ''}${p.citizenship2 ? ', ' + p.citizenship2 : ''}</td>
                 <td>${p.status}</td>
             </tr>
@@ -411,7 +411,7 @@ function renderPortfolios(portfolios) {
     return html;
 }
 
-function renderAdminOnlySections(client, userRole) {
+function renderAdminOnlySections(client, userRole, includeAccounts = true) {
     if (userRole !== 'ADMIN') return '';
 
     let html = '';
@@ -477,27 +477,29 @@ function renderAdminOnlySections(client, userRole) {
     `;
 
     // Accounts
-    html += `
-        <h2>Accounts</h2>
-        ${client.accounts && client.accounts.length > 0 ? `
-        <table>
-            <thead>
-                <tr>
-                    <th>Account Number</th>
-                    <th>Account Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${client.accounts.map(acc => `
+    if (includeAccounts) {
+        html += `
+            <h2>Accounts</h2>
+            ${client.accounts && client.accounts.length > 0 ? `
+            <table>
+                <thead>
                     <tr>
-                        <td>${acc.accountNumber}</td>
-                        <td>${acc.accountStatus}</td>
+                        <th>Account Number</th>
+                        <th>Account Status</th>
                     </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        ` : '<p>No accounts found.</p>'}
-    `;
+                </thead>
+                <tbody>
+                    ${client.accounts.map(acc => `
+                        <tr>
+                            <td>${acc.accountNumber}</td>
+                            <td>${acc.accountStatus}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            ` : '<p>No accounts found.</p>'}
+        `;
+    }
 
     return html;
 }
@@ -555,18 +557,15 @@ async function saveRelatedParty(clientID) {
 }
 
 
-async function loadRelatedPartyDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    const content = document.getElementById('content');
+async function showRelatedPartyDetails(id) {
+    const modal = document.getElementById('relatedPartyModal');
+    const content = document.getElementById('relatedPartyModalContent');
 
-    if (!id) {
-        content.innerHTML = '<p class="error">No related party ID provided.</p>';
-        return;
-    }
+    modal.style.display = 'block';
+    content.innerHTML = '<p class="loading">Loading details...</p>';
 
     try {
-        // Fetch User Role first
+        // Fetch User Role
         const userRes = await fetch('/api/users/me');
         if (!userRes.ok) throw new Error('Not authenticated');
         const userData = await userRes.json();
@@ -577,56 +576,62 @@ async function loadRelatedPartyDetails() {
         if (!response.ok) throw new Error('Failed to fetch related party details');
         const party = await response.json();
 
-        let html = `
-            <div class="client-detail">
-                <div class="case-info-grid">
-                    <div class="info-item"><strong>Relation Type</strong><span>${party.relationType}</span></div>
-                    <div class="info-item"><strong>Status</strong><span>${party.status}</span></div>
-                    <div class="info-item"><strong>Onboarding Date</strong><span>${party.onboardingDate || '-'}</span></div>
-                    <div class="info-item"><strong>Gender</strong><span>${party.gender || '-'}</span></div>
-                </div>
-
-                <div class="section-header"><h2>Personal Information</h2></div>
-                <div class="case-info-grid">
-                    <div class="info-item"><strong>Title Prefix</strong><span>${party.titlePrefix || '-'}</span></div>
-                    <div class="info-item"><strong>First Name</strong><span>${party.firstName}</span></div>
-                    <div class="info-item"><strong>Middle Name</strong><span>${party.middleName || '-'}</span></div>
-                    <div class="info-item"><strong>Last Name</strong><span>${party.lastName || '-'}</span></div>
-                    <div class="info-item"><strong>Title Suffix</strong><span>${party.titleSuffix || '-'}</span></div>
-                    <div class="info-item"><strong>Name at Birth</strong><span>${party.nameAtBirth || '-'}</span></div>
-                    <div class="info-item"><strong>Nick Name</strong><span>${party.nickName || '-'}</span></div>
-                    <div class="info-item"><strong>Date of Birth</strong><span>${party.dateOfBirth || '-'}</span></div>
-                </div>
-
-                <div class="section-header"><h2>Citizenship & Tax</h2></div>
-                <div class="case-info-grid">
-                    <div class="info-item"><strong>Citizenship 1</strong><span>${party.citizenship1 || '-'}</span></div>
-                    <div class="info-item"><strong>Citizenship 2</strong><span>${party.citizenship2 || '-'}</span></div>
-                    <div class="info-item"><strong>Language</strong><span>${party.language || '-'}</span></div>
-                    <div class="info-item"><strong>Country of Tax</strong><span>${party.countryOfTax || '-'}</span></div>
-                    <div class="info-item"><strong>FATCA Status</strong><span>${party.fatcaStatus || '-'}</span></div>
-                    <div class="info-item"><strong>CRS Status</strong><span>${party.crsStatus || '-'}</span></div>
-                </div>
-
-                <div class="section-header"><h2>Professional & Funds</h2></div>
-                <div class="case-info-grid">
-                    <div class="info-item"><strong>Occupation</strong><span>${party.occupation || '-'}</span></div>
-                    <div class="info-item"><strong>Source of Funds</strong><span>${party.sourceOfFundsCountry || '-'}</span></div>
-                </div>
-                
-                ${renderAdminOnlySections(party, userRole)}
-
-                <div style="margin-top: 2rem;">
-                    <a href="details.html?id=${party.clientID}" class="back-link">← Back to Client</a>
-                    <a href="/logout" class="back-link" style="margin-left: 10px;">Logout</a>
-                </div>
-            </div>
-        `;
-        content.innerHTML = html;
+        content.innerHTML = renderRelatedPartyModalContent(party, userRole);
     } catch (error) {
         console.error('Error loading related party details:', error);
         content.innerHTML = `<p class="error">Error: ${error.message}</p>`;
     }
+}
+
+function renderRelatedPartyModalContent(party, userRole) {
+    return `
+        <div class="client-detail" style="background: transparent; border: none; padding: 0;">
+            <div class="section-header">
+                <h2>Related Party: ${party.firstName} ${party.lastName}</h2>
+            </div>
+            
+            <div class="case-info-grid">
+                <div class="info-item"><strong>Relation Type</strong><span>${party.relationType}</span></div>
+                <div class="info-item"><strong>Status</strong><span>${party.status}</span></div>
+                <div class="info-item"><strong>Onboarding Date</strong><span>${party.onboardingDate || '-'}</span></div>
+                <div class="info-item"><strong>Gender</strong><span>${party.gender || '-'}</span></div>
+            </div>
+
+            <div class="section-header"><h3>Personal Information</h3></div>
+            <div class="case-info-grid">
+                <div class="info-item"><strong>Title Prefix</strong><span>${party.titlePrefix || '-'}</span></div>
+                <div class="info-item"><strong>First Name</strong><span>${party.firstName}</span></div>
+                <div class="info-item"><strong>Middle Name</strong><span>${party.middleName || '-'}</span></div>
+                <div class="info-item"><strong>Last Name</strong><span>${party.lastName || '-'}</span></div>
+                <div class="info-item"><strong>Title Suffix</strong><span>${party.titleSuffix || '-'}</span></div>
+                <div class="info-item"><strong>Name at Birth</strong><span>${party.nameAtBirth || '-'}</span></div>
+                <div class="info-item"><strong>Nick Name</strong><span>${party.nickName || '-'}</span></div>
+                <div class="info-item"><strong>Date of Birth</strong><span>${party.dateOfBirth || '-'}</span></div>
+            </div>
+
+            <div class="section-header"><h3>Citizenship & Tax</h3></div>
+            <div class="case-info-grid">
+                <div class="info-item"><strong>Citizenship 1</strong><span>${party.citizenship1 || '-'}</span></div>
+                <div class="info-item"><strong>Citizenship 2</strong><span>${party.citizenship2 || '-'}</span></div>
+                <div class="info-item"><strong>Language</strong><span>${party.language || '-'}</span></div>
+                <div class="info-item"><strong>Country of Tax</strong><span>${party.countryOfTax || '-'}</span></div>
+                <div class="info-item"><strong>FATCA Status</strong><span>${party.fatcaStatus || '-'}</span></div>
+                <div class="info-item"><strong>CRS Status</strong><span>${party.crsStatus || '-'}</span></div>
+            </div>
+
+            <div class="section-header"><h3>Professional & Funds</h3></div>
+            <div class="case-info-grid">
+                <div class="info-item"><strong>Occupation</strong><span>${party.occupation || '-'}</span></div>
+                <div class="info-item"><strong>Source of Funds</strong><span>${party.sourceOfFundsCountry || '-'}</span></div>
+            </div>
+            
+            ${renderAdminOnlySections(party, userRole, false)}
+        </div>
+    `;
+}
+
+async function loadRelatedPartyDetails() {
+    // Redundant now that we use popups on the details page
 }
 
 async function loadMaterialChanges(page = 0) {
