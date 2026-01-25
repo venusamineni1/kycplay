@@ -69,7 +69,8 @@ public class CaseRepository {
     }
 
     public void updateStatus(Long id, String status, String assignedTo) {
-        jdbcClient.sql("UPDATE Cases SET Status = :status, AssignedTo = :assignedTo WHERE CaseID = :id")
+        jdbcClient
+                .sql("UPDATE Cases SET Status = COALESCE(:status, Status), AssignedTo = :assignedTo WHERE CaseID = :id")
                 .param("status", status)
                 .param("assignedTo", assignedTo)
                 .param("id", id)

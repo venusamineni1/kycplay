@@ -34,7 +34,12 @@ public class PermissionRepository {
                 "VIEW_SENSITIVE_DATA",
                 "MANAGE_USERS",
                 "VIEW_CHANGES",
-                "MANAGE_PERMISSIONS");
+                "MANAGE_PERMISSIONS",
+                "MANAGE_CASES",
+                "APPROVE_CASES_STAGE1",
+                "APPROVE_CASES_STAGE2",
+                "APPROVE_CASES_STAGE3",
+                "APPROVE_CASES_STAGE4");
     }
 
     public void addPermissionToRole(String roleName, String permission) {
@@ -49,5 +54,14 @@ public class PermissionRepository {
                 .param("roleName", roleName)
                 .param("permission", permission)
                 .update();
+    }
+
+    public java.util.Map<String, List<String>> getAllRolePermissions() {
+        return jdbcClient.sql("SELECT RoleName, Permission FROM RolePermissions")
+                .query((rs, rowNum) -> java.util.Map.entry(rs.getString("RoleName"), rs.getString("Permission")))
+                .list().stream()
+                .collect(java.util.stream.Collectors.groupingBy(java.util.Map.Entry::getKey,
+                        java.util.stream.Collectors.mapping(java.util.Map.Entry::getValue,
+                                java.util.stream.Collectors.toList())));
     }
 }

@@ -1,96 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Viewer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Venus KYC</title>
+  <script type="module" crossorigin src="/assets/index-DvNC_eXa.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B-SFEizL.css">
 </head>
 
 <body>
-    <div class="container" style="max-width: 900px;">
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
-            <h1>KYC Dashboard</h1>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-                <select id="themeSwitcher" class="back-link"
-                    style="margin: 0; padding: 0.4rem; border-color: var(--glass-border); background: var(--glass-bg); color: var(--text-color); cursor: pointer;">
-                    <option value="theme-midnight">Midnight (Blue)</option>
-                    <option value="theme-sunset">Sunset (Warm)</option>
-                    <option value="theme-lightblue">Light Blue (Ocean)</option>
-                    <option value="theme-darkgray">Dark Gray (Mono)</option>
-                    <option value="theme-light">Light (Clean)</option>
-                </select>
-                <a href="profile.html" class="back-link"
-                    style="margin: 0; padding: 0.5rem; border-color: var(--glass-border); color: var(--text-color);">Profile</a>
-                <form action="/logout" method="post" style="display: inline;">
-                    <button type="submit" class="back-link"
-                        style="margin: 0; background: transparent; color: var(--text-color); cursor: pointer;">Logout</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="dashboard-grid"
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
-
-            <a href="clients.html" id="clientsCard" class="glass-section"
-                style="text-decoration: none; transition: transform 0.2s; display: none;">
-                <h3 style="margin-top: 0; color: #4facfe;">Client Directory</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">View and manage client profiles, identities,
-                    and related parties.</p>
-            </a>
-
-            <a href="changes.html" id="changesCard" class="glass-section"
-                style="text-decoration: none; transition: transform 0.2s; display: none;">
-                <h3 style="margin-top: 0; color: #00f2fe;">Material Changes</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Audit trail for all material changes across
-                    client entities.</p>
-            </a>
-
-            <a href="users.html" id="usersCard" class="glass-section"
-                style="text-decoration: none; transition: transform 0.2s; display: none;">
-                <h3 style="margin-top: 0; color: #f093fb;">User Management</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Create users and manage role assignments.
-                </p>
-            </a>
-
-            <a href="permissions.html" id="permissionsCard" class="glass-section"
-                style="text-decoration: none; transition: transform 0.2s; display: none;">
-                <h3 style="margin-top: 0; color: #f6d365;">Role Permissions</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Configure fine-grained authorities for each
-                    system role.</p>
-            </a>
-
-            <a href="cases.html" id="casesCard" class="glass-section"
-                style="text-decoration: none; transition: transform 0.2s; display: none;">
-                <h3 style="margin-top: 0; color: #a1c4fd;">Case Manager</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Manage KYC lifecycles, approvals, and
-                    document
-                    verification.</p>
-            </a>
-
-            <a href="admin-questionnaire.html" id="questionnaireCard" class="glass-section"
-                style="text-decoration: none; transition: transform 0.2s; display: none;">
-                <h3 style="margin-top: 0; color: #ff9a9e;">Questionnaire Config</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Manage questionnaire sections and questions
-                    for KYC cases.</p>
-            </a>
-
-        </div>
-
-        <style>
-            .glass-section:hover {
-                transform: translateY(-5px);
-                background: var(--hover-bg) !important;
-                border-color: var(--glass-border) !important;
-            }
-        </style>
-    </div>
-    <script src="app.js"></script>
+  <div id="root"></div>
 </body>
 
 </html>

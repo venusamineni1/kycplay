@@ -29,6 +29,14 @@ public class UserRepository {
                 .list();
     }
 
+    public List<User> findByRole(String role) {
+        return jdbcClient
+                .sql("SELECT UserID, Username, Password, Role, Enabled FROM AppUsers WHERE Role = :role")
+                .param("role", role)
+                .query(User.class)
+                .list();
+    }
+
     public void create(User user) {
         jdbcClient.sql(
                 "INSERT INTO AppUsers (Username, Password, Role, Enabled) VALUES (:username, :password, :role, :enabled)")

@@ -1,12 +1,13 @@
 package com.venus.kyc.viewer;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -16,30 +17,41 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .authorizeHttpRequests((authorize) -> authorize
-                                                .requestMatchers("/login.html", "/style.css").permitAll()
+                                                .requestMatchers("/", "/index.html", "/login.html", "/login",
+                                                                "/style.css",
+                                                                "/assets/**",
+                                                                "/*.js", "/*.css", "/*.ico", "/*.png", "/*.jpg",
+                                                                "/api/risk/**")
+                                                .permitAll()
                                                 .requestMatchers("/api/users/me").authenticated()
-                                                .requestMatchers("/users.html", "/api/users/**")
-                                                .hasAuthority("MANAGE_USERS")
-                                                .requestMatchers("/clients.html", "/details.html", "/api/clients/**")
-                                                .hasAuthority("VIEW_CLIENTS")
-                                                .requestMatchers("/changes.html", "/api/clients/changes")
-                                                .hasAuthority("VIEW_CHANGES")
-                                                .requestMatchers("/permissions.html", "/api/permissions/**")
+                                                .requestMatchers("/api/users/**").hasAuthority("MANAGE_USERS")
+                                                .requestMatchers("/api/clients/**").hasAuthority("VIEW_CLIENTS")
+                                                .requestMatchers("/api/clients/changes").hasAuthority("VIEW_CHANGES")
+                                                .requestMatchers("/api/permissions/**")
                                                 .hasAuthority("MANAGE_PERMISSIONS")
-                                                .requestMatchers("/cases.html", "/case-details.html", "/api/cases/**")
-                                                .hasAuthority("MANAGE_CASES")
+                                                .requestMatchers("/api/cases/**").hasAuthority("MANAGE_CASES")
                                                 .anyRequest().authenticated())
                                 .formLogin(form -> form
-                                                .loginPage("/login.html")
-                                                .loginProcessingUrl("/login")
-                                                .defaultSuccessUrl("/index.html", true)
-                                                .failureUrl("/login.html?error=true")
+                                                .loginPage("/login")
+                                                .loginProcessingUrl("/api/login")
+                                                .successHandler((request, response, authentication) -> {
+                                                        response.setStatus(200);
+                                                })
+                                                .failureHandler((request, response, exception) -> {
+                                                        response.setStatus(401);
+                                                })
                                                 .permitAll())
                                 .logout(logout -> logout
-                                                .logoutUrl("/logout")
-                                                .logoutSuccessUrl("/login.html?logout=true")
+                                                .logoutUrl("/api/logout")
+                                                .logoutSuccessHandler((request, response, authentication) -> {
+                                                        response.setStatus(200);
+                                                })
+                                                .invalidateHttpSession(true)
+                                                .deleteCookies("JSESSIONID")
                                                 .permitAll())
-                                .httpBasic(withDefaults())
+                                .exceptionHandling(e -> e
+                                                .authenticationEntryPoint(
+                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                                 .csrf(csrf -> csrf.disable()); // Disable CSRF for simplicity in this demo
 
                 return http.build();

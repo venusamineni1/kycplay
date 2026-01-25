@@ -22,16 +22,21 @@ public class UserController {
         return userRepository.findAll();
     }
 
+    @GetMapping("/role/{role}")
+    public List<User> getUsersByRole(@PathVariable String role) {
+        return userRepository.findByRole(role);
+    }
+
     @PostMapping
-    public ResponseEntity<Void> createUser(@RequestBody User user) {
+    public ResponseEntity<Void> createUser(@RequestBody CreateUserRequest request) {
         // Ensure password is simple for this demo (prefixed with {noop} if missing)
         // In a real app, we would hash it here.
-        String password = user.password();
+        String password = request.password();
         if (!password.startsWith("{noop}")) {
             password = "{noop}" + password;
         }
 
-        User newUser = new User(null, user.username(), password, user.role(), true);
+        User newUser = new User(null, request.username(), password, request.role(), true);
         userRepository.create(newUser);
         return ResponseEntity.ok().build();
     }
@@ -82,6 +87,9 @@ public class UserController {
     }
 
     // Inner records for request bodies
+    public record CreateUserRequest(String username, String password, String role) {
+    }
+
     public record PasswordChangeRequest(String oldPassword, String newPassword) {
     }
 

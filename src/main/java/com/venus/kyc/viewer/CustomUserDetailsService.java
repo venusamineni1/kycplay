@@ -23,7 +23,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         java.util.List<String> permissions = permissionRepository.findPermissionsByRole(user.role());
         String[] authorities = new String[permissions.size() + 1];
-        authorities[0] = "ROLE_" + user.role();
+        // Ensure we don't double prefix if DB already has it, or just use bare role if
+        // configured that way.
+        // Spring Security usually wants ROLE_ for hasRole(), or any string for
+        // hasAuthority().
+        // Our SecurityConfig uses hasAuthority("MANAGE_USERS") etc.
+        // It does NOT use hasRole().
+        // However, standard is usually ROLE_ prefix for the role itself.
+        authorities[0] = user.role().startsWith("ROLE_") ? user.role() : "ROLE_" + user.role();
         for (int i = 0; i < permissions.size(); i++) {
             authorities[i + 1] = permissions.get(i);
         }

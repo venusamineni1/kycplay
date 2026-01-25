@@ -16,6 +16,11 @@ public class PermissionController {
         this.permissionRepository = permissionRepository;
     }
 
+    @GetMapping
+    public Map<String, List<String>> getPermissionsMap() {
+        return permissionRepository.getAllRolePermissions();
+    }
+
     @GetMapping("/roles")
     public List<String> getRoles() {
         return permissionRepository.findAllRoles();

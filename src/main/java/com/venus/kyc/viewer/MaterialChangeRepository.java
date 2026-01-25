@@ -57,14 +57,14 @@ public class MaterialChangeRepository {
         }
         String direction = "DESC".equalsIgnoreCase(sortDir) ? "DESC" : "ASC";
 
-        String sql = "SELECT * FROM MaterialChanges WHERE 1=1";
+        String sql = "SELECT mc.*, COALESCE(c.NameAtBirth, c.FirstName || ' ' || c.LastName) as ClientName FROM MaterialChanges mc LEFT JOIN Clients c ON mc.ClientID = c.ClientID WHERE 1=1";
         if (startDate != null && !startDate.isEmpty()) {
-            sql += " AND ChangeDate >= :startDate";
+            sql += " AND mc.ChangeDate >= :startDate";
         }
         if (endDate != null && !endDate.isEmpty()) {
-            sql += " AND ChangeDate <= :endDate";
+            sql += " AND mc.ChangeDate <= :endDate";
         }
-        sql += " ORDER BY " + sortColumn + " " + direction + " LIMIT :limit OFFSET :offset";
+        sql += " ORDER BY mc." + sortColumn + " " + direction + " LIMIT :limit OFFSET :offset";
 
         var query = jdbcClient.sql(sql)
                 .param("limit", size)
@@ -79,6 +79,7 @@ public class MaterialChangeRepository {
                 rs.getLong("ChangeID"),
                 rs.getTimestamp("ChangeDate").toLocalDateTime(),
                 rs.getLong("ClientID"),
+                rs.getString("ClientName"),
                 rs.getLong("EntityID"),
                 rs.getString("EntityName"),
                 rs.getString("ColumnName"),
@@ -91,14 +92,14 @@ public class MaterialChangeRepository {
     }
 
     public List<MaterialChange> findAllForExport(String startDate, String endDate) {
-        String sql = "SELECT * FROM MaterialChanges WHERE 1=1";
+        String sql = "SELECT mc.*, COALESCE(c.NameAtBirth, c.FirstName || ' ' || c.LastName) as ClientName FROM MaterialChanges mc LEFT JOIN Clients c ON mc.ClientID = c.ClientID WHERE 1=1";
         if (startDate != null && !startDate.isEmpty()) {
-            sql += " AND ChangeDate >= :startDate";
+            sql += " AND mc.ChangeDate >= :startDate";
         }
         if (endDate != null && !endDate.isEmpty()) {
-            sql += " AND ChangeDate <= :endDate";
+            sql += " AND mc.ChangeDate <= :endDate";
         }
-        sql += " ORDER BY ChangeDate DESC";
+        sql += " ORDER BY mc.ChangeDate DESC";
 
         var query = jdbcClient.sql(sql);
         if (startDate != null && !startDate.isEmpty())
@@ -110,6 +111,7 @@ public class MaterialChangeRepository {
                 rs.getLong("ChangeID"),
                 rs.getTimestamp("ChangeDate").toLocalDateTime(),
                 rs.getLong("ClientID"),
+                rs.getString("ClientName"),
                 rs.getLong("EntityID"),
                 rs.getString("EntityName"),
                 rs.getString("ColumnName"),
