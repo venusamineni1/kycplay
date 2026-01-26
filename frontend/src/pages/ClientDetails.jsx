@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import { caseService } from '../services/caseService';
 import { riskService } from '../services/riskService';
 import { useNavigate } from 'react-router-dom';
+import Questionnaire from './Questionnaire';
 
 const Section = ({ title, children, actions }) => (
     <section className="glass-section" style={{ marginTop: '1.5rem' }}>
@@ -53,6 +54,7 @@ const ClientDetails = () => {
     const [assessmentDetails, setAssessmentDetails] = useState([]);
     const [creatingCase, setCreatingCase] = useState(false);
     const [runningAssessment, setRunningAssessment] = useState(false);
+    const [viewQuestionnaireCaseId, setViewQuestionnaireCaseId] = useState(null);
 
     const fetchDetails = async () => {
         setLoading(true);
@@ -326,7 +328,20 @@ const ClientDetails = () => {
 
 
             {/* Relevant Cases Section */}
-            <Section title="Relevant Cases">
+            <Section title="Relevant Cases" actions={
+                cases && cases.length > 0 && (
+                    <Button
+                        onClick={() => {
+                            const latestCaseId = cases.sort((a, b) => b.caseID - a.caseID)[0].caseID;
+                            setViewQuestionnaireCaseId(latestCaseId);
+                        }}
+                        variant="secondary"
+                        style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}
+                    >
+                        📄 View Latest Questionnaire
+                    </Button>
+                )
+            }>
                 {cases && cases.length > 0 ? (
                     <table>
                         <thead>
@@ -615,6 +630,18 @@ const ClientDetails = () => {
                     </div>
                 </div>
             )}
+
+            {/* Questionnaire Modal */}
+            <Modal
+                isOpen={!!viewQuestionnaireCaseId}
+                onClose={() => setViewQuestionnaireCaseId(null)}
+                title={`Questionnaire (Case #${viewQuestionnaireCaseId})`}
+                maxWidth="900px"
+            >
+                {viewQuestionnaireCaseId && (
+                    <Questionnaire caseId={viewQuestionnaireCaseId} readOnly={true} />
+                )}
+            </Modal>
         </div>
     );
 };

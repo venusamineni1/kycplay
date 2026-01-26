@@ -101,6 +101,12 @@ export const caseService = {
         return response.json();
     },
 
+    getAllUsers: async () => {
+        const response = await fetch('/api/users');
+        if (!response.ok) throw new Error('Failed to fetch users');
+        return response.json();
+    },
+
     // Admin Workflow
     getAdminTasks: async () => {
         const response = await fetch('/api/cases/admin/tasks');

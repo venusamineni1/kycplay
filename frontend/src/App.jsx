@@ -15,6 +15,7 @@ import AdminQuestionnaire from './pages/AdminQuestionnaire';
 import AdminWorkflowDashboard from './pages/AdminWorkflowDashboard';
 import Questionnaire from './pages/Questionnaire';
 import TaskInbox from './pages/TaskInbox';
+import AdHocTaskList from './pages/AdHocTaskList';
 import Login from './pages/Login';
 
 import Profile from './pages/Profile';
@@ -60,6 +61,7 @@ function App() {
                       <Route path="/admin/questionnaire" element={<AdminQuestionnaire />} />
                       <Route path="/admin/workflow" element={<AdminWorkflowDashboard />} />
                       <Route path="/inbox" element={<TaskInbox />} />
+                      <Route path="/adhoc-tasks" element={<AdHocTaskList />} />
                       <Route path="/profile" element={<Profile />} />
                     </Routes>
                   </Layout>

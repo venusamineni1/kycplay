@@ -53,13 +53,25 @@ const TaskInbox = () => {
                         {tasks.map(task => (
                             <tr key={task.taskId}>
                                 <td>{task.name}</td>
-                                <td><Link to={`/cases/${task.caseId}`}>#{task.caseId}</Link></td>
-                                <td>{task.clientID}</td>
+                                <td>
+                                    {task.caseId ? (
+                                        <Link to={`/cases/${task.caseId}`}>#{task.caseId}</Link>
+                                    ) : (
+                                        <span className="badge badge-info">Ad-Hoc</span>
+                                    )}
+                                </td>
+                                <td>{task.clientID || '-'}</td>
                                 <td>{new Date(task.createTime).toLocaleString()}</td>
                                 <td>
-                                    <button className="btn btn-sm" onClick={() => handleProcessTask(task.caseId)}>
-                                        Process
-                                    </button>
+                                    {task.caseId ? (
+                                        <button className="btn btn-sm" onClick={() => handleProcessTask(task.caseId)}>
+                                            Process Case
+                                        </button>
+                                    ) : (
+                                        <Link to="/adhoc-tasks" className="btn btn-sm btn-secondary">
+                                            View Task
+                                        </Link>
+                                    )}
                                 </td>
                             </tr>
                         ))}

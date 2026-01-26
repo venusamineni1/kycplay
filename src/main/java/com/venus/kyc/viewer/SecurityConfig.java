@@ -24,7 +24,12 @@ public class SecurityConfig {
                                                                 "/api/risk/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/users/me").authenticated()
+                                                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users")
+                                                .authenticated() // Allow listing users
                                                 .requestMatchers("/api/users/**").hasAuthority("MANAGE_USERS")
+                                                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                                                "/api/clients")
+                                                .authenticated() // Allow listing clients
                                                 .requestMatchers("/api/clients/**").hasAuthority("VIEW_CLIENTS")
                                                 .requestMatchers("/api/clients/changes").hasAuthority("VIEW_CHANGES")
                                                 .requestMatchers("/api/permissions/**")

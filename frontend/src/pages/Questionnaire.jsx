@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { questionnaireService } from '../services/questionnaireService';
 import Button from '../components/Button';
 
-const Questionnaire = () => {
-    const { id: caseId } = useParams();
+const Questionnaire = ({ caseId: propCaseId, readOnly: propReadOnly }) => {
+    const { id: paramCaseId } = useParams();
+    const caseId = propCaseId || paramCaseId;
+
     const [template, setTemplate] = useState([]);
     const [responses, setResponses] = useState({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+
+    const [searchParams] = useSearchParams();
+    const isReadOnly = propReadOnly !== undefined ? propReadOnly : (searchParams.get('readonly') === 'true');
 
     useEffect(() => {
         const loadData = async () => {
@@ -63,19 +68,24 @@ const Questionnaire = () => {
     };
 
     if (loading) return <p className="loading">Loading questionnaire...</p>;
-    if (error) return <p className="error">{error}</p>;
+    // If used as a component (propCaseId is set), we might want to skip the main header or adjust it
+    const isModal = !!propCaseId;
 
     return (
         <div>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ margin: 0 }}>KYC Questionnaire</h1>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button onClick={handleSave} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                    <Link to={`/cases/${caseId}`} className="back-link">Back to Case</Link>
-                </div>
-            </header>
+            {!isModal && (
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <h1 style={{ margin: 0 }}>KYC Questionnaire</h1>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        {!isReadOnly && (
+                            <Button onClick={handleSave} disabled={saving}>
+                                {saving ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        )}
+                        <Link to={`/cases/${caseId}`} className="back-link">Back to Case</Link>
+                    </div>
+                </header>
+            )}
 
             {template.map(section => (
                 <section key={section.sectionID} className="glass-section" style={{ marginBottom: '1.5rem' }}>
@@ -91,12 +101,14 @@ const Questionnaire = () => {
                                     value={responses[q.questionID] || ''}
                                     onChange={(e) => setResponses({ ...responses, [q.questionID]: e.target.value })}
                                     style={{ width: '100%', height: '80px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px', padding: '0.5rem' }}
+                                    disabled={isReadOnly}
                                 />
                             ) : q.questionType === 'CHOICE' ? (
                                 <select
                                     value={responses[q.questionID] || ''}
                                     onChange={(e) => setResponses({ ...responses, [q.questionID]: e.target.value })}
                                     style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '4px' }}
+                                    disabled={isReadOnly}
                                 >
                                     <option value="">Select an option...</option>
                                     {q.options.split(';').map(opt => (
@@ -105,23 +117,25 @@ const Questionnaire = () => {
                                 </select>
                             ) : q.questionType === 'YES_NO' ? (
                                 <div style={{ display: 'flex', gap: '1.5rem' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: isReadOnly ? 'default' : 'pointer' }}>
                                         <input
                                             type="radio"
                                             name={`q_${q.questionID}`}
                                             value="Yes"
                                             checked={responses[q.questionID] === 'Yes'}
                                             onChange={(e) => setResponses({ ...responses, [q.questionID]: e.target.value })}
+                                            disabled={isReadOnly}
                                         />
                                         Yes
                                     </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: isReadOnly ? 'default' : 'pointer' }}>
                                         <input
                                             type="radio"
                                             name={`q_${q.questionID}`}
                                             value="No"
                                             checked={responses[q.questionID] === 'No'}
                                             onChange={(e) => setResponses({ ...responses, [q.questionID]: e.target.value })}
+                                            disabled={isReadOnly}
                                         />
                                         No
                                     </label>
@@ -129,12 +143,13 @@ const Questionnaire = () => {
                             ) : q.questionType === 'MULTI_CHOICE' ? (
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                                     {q.options.split(',').map(opt => (
-                                        <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
+                                        <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: isReadOnly ? 'default' : 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
                                             <input
                                                 type="checkbox"
                                                 value={opt}
                                                 checked={(responses[q.questionID] || '').split(',').includes(opt)}
                                                 onChange={() => toggleMultiChoice(q.questionID, opt)}
+                                                disabled={isReadOnly}
                                             />
                                             {opt}
                                         </label>

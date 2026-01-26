@@ -88,6 +88,9 @@ const Layout = ({ children }) => {
                             <Link to="/inbox" className="btn btn-secondary" style={{ textAlign: 'center' }} onClick={() => setIsMenuOpen(false)}>
                                 My Inbox
                             </Link>
+                            <Link to="/adhoc-tasks" className="btn btn-secondary" style={{ textAlign: 'center' }} onClick={() => setIsMenuOpen(false)}>
+                                Ad-Hoc Tasks
+                            </Link>
 
                             {hasPermission('MANAGE_USERS') && (
                                 <Link to="/users" className="btn btn-secondary" style={{ textAlign: 'center' }} onClick={() => setIsMenuOpen(false)}>
