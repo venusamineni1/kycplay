@@ -52,6 +52,7 @@ const ClientDetails = () => {
     const [selectedAssessment, setSelectedAssessment] = useState(null);
     const [assessmentDetails, setAssessmentDetails] = useState([]);
     const [creatingCase, setCreatingCase] = useState(false);
+    const [runningAssessment, setRunningAssessment] = useState(false);
 
     const fetchDetails = async () => {
         setLoading(true);
@@ -156,9 +157,11 @@ const ClientDetails = () => {
                         position: 'relative'
                     }}>
                         <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
-                            <Button variant="outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setIsRiskHistoryOpen(true)}>
-                                🕒 History
-                            </Button>
+                            {hasPermission('MANAGE_RISK') && (
+                                <Button variant="outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setIsRiskHistoryOpen(true)}>
+                                    🕒 History
+                                </Button>
+                            )}
                         </div>
 
                         <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>Current Risk</h4>
@@ -188,19 +191,25 @@ const ClientDetails = () => {
                             </div>
                         )}
 
-                        <Button onClick={async () => {
-                            try {
-                                await riskService.calculateRisk(client);
-                                // Refresh history
-                                const history = await riskService.getRiskHistory(client.clientID);
-                                setRiskHistory(history);
-                                alert('Risk Assessment completed successfully');
-                            } catch (e) {
-                                alert('Failed to run risk assessment: ' + e.message);
-                            }
-                        }} style={{ width: '100%' }}>
-                            Run Assessment
-                        </Button>
+                        {hasPermission('MANAGE_RISK') && (
+                            <Button onClick={async () => {
+                                if (runningAssessment) return;
+                                setRunningAssessment(true);
+                                try {
+                                    await riskService.calculateRisk(client);
+                                    // Refresh history
+                                    const history = await riskService.getRiskHistory(client.clientID);
+                                    setRiskHistory(history);
+                                    alert('Risk Assessment completed successfully');
+                                } catch (e) {
+                                    alert('Failed to run risk assessment: ' + e.message);
+                                } finally {
+                                    setRunningAssessment(false);
+                                }
+                            }} style={{ width: '100%' }} disabled={runningAssessment}>
+                                {runningAssessment ? 'Running...' : 'Run Assessment'}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </Section>

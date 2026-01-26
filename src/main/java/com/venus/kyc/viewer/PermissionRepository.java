@@ -39,7 +39,8 @@ public class PermissionRepository {
                 "APPROVE_CASES_STAGE1",
                 "APPROVE_CASES_STAGE2",
                 "APPROVE_CASES_STAGE3",
-                "APPROVE_CASES_STAGE4");
+                "APPROVE_CASES_STAGE4",
+                "MANAGE_RISK");
     }
 
     public void addPermissionToRole(String roleName, String permission) {
