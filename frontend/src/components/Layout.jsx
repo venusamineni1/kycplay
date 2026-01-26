@@ -9,15 +9,47 @@ const Layout = ({ children }) => {
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        if (isMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isMenuOpen]);
 
     return (
         <div className="container">
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', position: 'relative', zIndex: 100 }}>
                 <h1><Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>KYC Dashboard</Link></h1>
 
-                <div style={{ position: 'relative' }}>
-                    <Button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{ minWidth: '100px' }}>
-                        Menu {isMenuOpen ? '▲' : '▼'}
+                <div style={{ position: 'relative' }} ref={menuRef}>
+                    <Button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{
+                        minWidth: 'auto',
+                        padding: '0.5rem',
+                        background: 'transparent',
+                        border: '1px solid var(--glass-border)',
+                        color: 'var(--text-color)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                     </Button>
 
                     {isMenuOpen && (
@@ -31,7 +63,10 @@ const Layout = ({ children }) => {
                             gap: '0.8rem',
                             padding: '1rem',
                             zIndex: 101, // Ensure it floats above content
-                            backdropFilter: 'blur(16px)' // Enhanced blur
+                            backdropFilter: 'blur(16px)', // Enhanced blur
+                            background: 'var(--menu-bg)',
+                            border: '1px solid var(--primary-color)',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
                         }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Theme</span>

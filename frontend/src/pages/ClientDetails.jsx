@@ -51,6 +51,7 @@ const ClientDetails = () => {
     const [isRiskHistoryOpen, setIsRiskHistoryOpen] = useState(false);
     const [selectedAssessment, setSelectedAssessment] = useState(null);
     const [assessmentDetails, setAssessmentDetails] = useState([]);
+    const [creatingCase, setCreatingCase] = useState(false);
 
     const fetchDetails = async () => {
         setLoading(true);
@@ -87,12 +88,16 @@ const ClientDetails = () => {
     }, [id]);
 
     const handleCreateCase = async () => {
+        if (creatingCase) return;
+        setCreatingCase(true);
         try {
             const caseId = await caseService.createCase(id, caseReason);
             setIsCaseModalOpen(false);
             navigate(`/cases/${caseId}`);
         } catch (err) {
             alert('Failed to create case: ' + err.message);
+        } finally {
+            setCreatingCase(false);
         }
     };
 
@@ -412,7 +417,7 @@ const ClientDetails = () => {
                             <option value="Ad-hoc Review">Ad-hoc Review</option>
                         </select>
                     </div>
-                    <Button onClick={handleCreateCase}>Create Case</Button>
+                    <Button onClick={handleCreateCase} disabled={creatingCase}>{creatingCase ? 'Creating...' : 'Create Case'}</Button>
                 </div>
             </Modal>
 
