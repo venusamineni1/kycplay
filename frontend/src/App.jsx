@@ -12,6 +12,7 @@ import MaterialChanges from './pages/MaterialChanges';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdminPermissions from './pages/AdminPermissions';
 import AdminQuestionnaire from './pages/AdminQuestionnaire';
+import AdminWorkflowDashboard from './pages/AdminWorkflowDashboard';
 import Questionnaire from './pages/Questionnaire';
 import TaskInbox from './pages/TaskInbox';
 import Login from './pages/Login';
@@ -57,6 +58,7 @@ function App() {
                       <Route path="/cases/:id" element={<CaseDetails />} />
                       <Route path="/cases/:id/questionnaire" element={<Questionnaire />} />
                       <Route path="/admin/questionnaire" element={<AdminQuestionnaire />} />
+                      <Route path="/admin/workflow" element={<AdminWorkflowDashboard />} />
                       <Route path="/inbox" element={<TaskInbox />} />
                       <Route path="/profile" element={<Profile />} />
                     </Routes>

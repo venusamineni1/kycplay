@@ -74,6 +74,32 @@ public class CaseController {
         return caseService.getUserTasks(user.username(), groups);
     }
 
+    @DeleteMapping("/tasks")
+    public ResponseEntity<Void> deleteAllTasks() {
+        caseService.deleteAllTasks();
+        return ResponseEntity.ok().build();
+    }
+
+    // Admin Endpoints
+
+    @GetMapping("/admin/tasks")
+    public List<Map<String, Object>> getAllTasks(org.springframework.security.core.Authentication authentication) {
+        // In real app, check for ADMIN role
+        return caseService.getAllTasks();
+    }
+
+    @GetMapping("/admin/processes")
+    public List<Map<String, Object>> getAllProcesses(org.springframework.security.core.Authentication authentication) {
+        return caseService.getAllProcessInstances();
+    }
+
+    @DeleteMapping("/admin/processes/{id}")
+    public ResponseEntity<Void> terminateProcess(@PathVariable String id,
+            org.springframework.security.core.Authentication authentication) {
+        caseService.terminateProcessInstance(id);
+        return ResponseEntity.ok().build();
+    }
+
     // Updated to use Workflow
     @PostMapping("/{id}/transition")
     public ResponseEntity<Void> transitionCase(@PathVariable Long id, @RequestBody Map<String, String> request,

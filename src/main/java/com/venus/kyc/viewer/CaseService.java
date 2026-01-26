@@ -251,4 +251,55 @@ public class CaseService {
         }
     }
 
+    @Transactional
+    public void deleteAllTasks() {
+        List<org.flowable.engine.runtime.ProcessInstance> instances = runtimeService.createProcessInstanceQuery()
+                .list();
+        for (org.flowable.engine.runtime.ProcessInstance instance : instances) {
+            runtimeService.deleteProcessInstance(instance.getId(), "Bulk delete requested by user");
+        }
+    }
+
+    public List<Map<String, Object>> getAllTasks() {
+        List<Task> tasks = taskService.createTaskQuery()
+                .includeProcessVariables()
+                .orderByTaskCreateTime().desc()
+                .list();
+
+        return tasks.stream().map(task -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("taskId", task.getId());
+            map.put("name", task.getName());
+            map.put("assignee", task.getAssignee());
+            map.put("createTime", task.getCreateTime());
+            map.put("processInstanceId", task.getProcessInstanceId());
+            map.put("caseId", task.getProcessVariables().get("caseId"));
+            map.put("clientID", task.getProcessVariables().get("clientID"));
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getAllProcessInstances() {
+        List<org.flowable.engine.runtime.ProcessInstance> instances = runtimeService.createProcessInstanceQuery()
+                .includeProcessVariables()
+                .orderByProcessInstanceId().desc()
+                .list();
+
+        return instances.stream().map(instance -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", instance.getId());
+            map.put("definitionKey", instance.getProcessDefinitionKey());
+            map.put("startTime", instance.getStartTime());
+            map.put("caseId", instance.getProcessVariables().get("caseId"));
+            map.put("clientID", instance.getProcessVariables().get("clientID"));
+            map.put("initiator", instance.getProcessVariables().get("initiator"));
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void terminateProcessInstance(String processInstanceId) {
+        runtimeService.deleteProcessInstance(processInstanceId, "Terminated by Admin");
+    }
+
 }

@@ -99,5 +99,28 @@ export const caseService = {
         const response = await fetch(`/api/users/role/${role}`);
         if (!response.ok) throw new Error('Failed to fetch users by role');
         return response.json();
+    },
+
+    // Admin Workflow
+    getAdminTasks: async () => {
+        const response = await fetch('/api/cases/admin/tasks');
+        if (!response.ok) throw new Error('Failed to fetch admin tasks');
+        return response.json();
+    },
+
+    getAdminProcesses: async () => {
+        const response = await fetch('/api/cases/admin/processes');
+        if (!response.ok) throw new Error('Failed to fetch admin processes');
+        return response.json();
+    },
+
+    terminateProcess: async (id) => {
+        const response = await fetch(`/api/cases/admin/processes/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to terminate process');
+    },
+
+    deleteAllTasks: async () => {
+        const response = await fetch('/api/cases/tasks', { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete all tasks');
     }
 };

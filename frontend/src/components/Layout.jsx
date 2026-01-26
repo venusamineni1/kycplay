@@ -59,6 +59,11 @@ const Layout = ({ children }) => {
                                     Manage Users
                                 </Link>
                             )}
+                            {hasPermission('MANAGE_USERS') && (
+                                <Link to="/admin/workflow" className="btn btn-secondary" style={{ textAlign: 'center' }} onClick={() => setIsMenuOpen(false)}>
+                                    Workflow Dashboard
+                                </Link>
+                            )}
                             {hasPermission('MANAGE_PERMISSIONS') && (
                                 <Link to="/permissions" className="btn btn-secondary" style={{ textAlign: 'center' }} onClick={() => setIsMenuOpen(false)}>
                                     Permissions
