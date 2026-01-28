@@ -77,7 +77,8 @@ const AdminQuestionnaire = () => {
                 questionType: 'TEXT',
                 isMandatory: false,
                 options: '',
-                displayOrder: 1
+                displayOrder: 1,
+                riskFactorKey: ''
             }
         });
     };
@@ -243,12 +244,28 @@ const AdminQuestionnaire = () => {
                             </label>
                         </div>
                         <div className="form-group">
-                            <label>Display Order</label>
                             <input
                                 type="number"
                                 value={questionModal.data.displayOrder}
                                 onChange={(e) => setQuestionModal({ ...questionModal, data: { ...questionModal.data, displayOrder: parseInt(e.target.value) } })}
                             />
+                        </div>
+
+                        {/* Risk Factor Key - Only relevant for Yes/No, but editable for all */}
+                        <div className="form-group">
+                            <label>Risk Factor Key (Optional)</label>
+                            <select
+                                value={questionModal.data.riskFactorKey || ''}
+                                onChange={(e) => setQuestionModal({ ...questionModal, data: { ...questionModal.data, riskFactorKey: e.target.value } })}
+                            >
+                                <option value="">-- None --</option>
+                                <option value="ADVERSE_MEDIA">Adverse Media</option>
+                                <option value="SUSPICIOUS_ACTIVITY_REPORT">Suspicious Activity Report</option>
+                                <option value="INVESTOR_VISA">Investor Visa</option>
+                            </select>
+                            <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.25rem' }}>
+                                If mapped, a "Yes" answer will trigger this risk rule.
+                            </p>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                             <Button variant="secondary" onClick={() => setQuestionModal({ ...questionModal, open: false })}>Cancel</Button>

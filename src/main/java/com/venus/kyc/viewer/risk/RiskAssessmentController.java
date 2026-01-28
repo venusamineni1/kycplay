@@ -23,6 +23,13 @@ public class RiskAssessmentController {
     return ResponseEntity.ok(response);
   }
 
+  @PostMapping("/evaluate/{clientId}")
+  public ResponseEntity<RiskDTOs.CalculateRiskResponse> evaluateRiskForClient(
+      @org.springframework.web.bind.annotation.PathVariable Long clientId) {
+    RiskDTOs.CalculateRiskResponse response = service.evaluateRiskForClient(clientId);
+    return ResponseEntity.ok(response);
+  }
+
   @PostMapping("/dummy-external-api")
   public ResponseEntity<String> mockExternalApi(@RequestBody String request) {
     String recordId = "00001497165";

@@ -11,6 +11,7 @@ const CaseDetails = () => {
     const [kycCase, setKycCase] = useState(null);
     const [comments, setComments] = useState([]);
     const [docs, setDocs] = useState([]);
+    const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [commentInput, setCommentInput] = useState('');
     const [error, setError] = useState(null);
@@ -35,14 +36,16 @@ const CaseDetails = () => {
     const loadCaseData = async () => {
         if (!kycCase) setLoading(true);
         try {
-            const [caseData, commentsData, docsData] = await Promise.all([
+            const [caseData, commentsData, docsData, eventsData] = await Promise.all([
                 caseService.getCaseDetails(id),
                 caseService.getCaseComments(id),
-                caseService.getCaseDocuments(id)
+                caseService.getCaseDocuments(id),
+                caseService.getCaseEvents(id)
             ]);
             setKycCase(caseData);
             setComments(commentsData);
             setDocs(docsData);
+            setEvents(eventsData);
 
             // Fetch related cases after getting case details
             if (caseData.clientID) {
@@ -200,6 +203,42 @@ const CaseDetails = () => {
             </section>
 
             <section className="glass-section" style={{ marginTop: '1.5rem' }}>
+                <h3>Case Events</h3>
+                {events && events.length > 0 ? (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+                        <thead>
+                            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--glass-border)' }}>
+                                <th style={{ padding: '0.5rem' }}>Date</th>
+                                <th style={{ padding: '0.5rem' }}>Type</th>
+                                <th style={{ padding: '0.5rem' }}>Description</th>
+                                <th style={{ padding: '0.5rem' }}>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {events.map(event => (
+                                <tr key={event.eventID} style={{
+                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                    background: event.eventType === 'RISK_CHANGED' ? 'rgba(255, 150, 50, 0.1)' : 'transparent',
+                                    borderLeft: event.eventType === 'RISK_CHANGED' ? '3px solid #ffaa00' : 'none'
+                                }}>
+                                    <td style={{ padding: '0.5rem' }}>{new Date(event.eventDate).toLocaleString()}</td>
+                                    <td style={{ padding: '0.5rem' }}>
+                                        <span className={`status-badge ${event.eventType === 'RISK_CHANGED' ? 'warning' : 'info'}`}>
+                                            {event.eventType}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '0.5rem' }}>{event.eventDescription}</td>
+                                    <td style={{ padding: '0.5rem' }}>{event.eventSource}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p style={{ color: '#aaa', fontStyle: 'italic' }}>No events recorded for this case.</p>
+                )}
+            </section>
+
+            <section className="glass-section" style={{ marginTop: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h3 style={{ margin: 0 }}>Documents</h3>
                     {['APPROVED', 'REJECTED'].indexOf(kycCase.status) === -1 && (
@@ -300,6 +339,8 @@ const CaseDetails = () => {
                     )}
                 </div>
             </section>
+
+
 
             {/* Upload Document Modal */}
             <Modal

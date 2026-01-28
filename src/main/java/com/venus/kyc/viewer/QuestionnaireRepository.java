@@ -29,7 +29,15 @@ public class QuestionnaireRepository {
             List<QuestionnaireQuestion> questions = jdbcClient.sql(
                     "SELECT * FROM QuestionnaireQuestions WHERE SectionID = :sectionID ORDER BY DisplayOrder")
                     .param("sectionID", section.sectionID())
-                    .query(QuestionnaireQuestion.class)
+                    .query((rs, rowNum) -> new QuestionnaireQuestion(
+                            rs.getLong("QuestionID"),
+                            rs.getLong("SectionID"),
+                            rs.getString("QuestionText"),
+                            rs.getString("QuestionType"),
+                            rs.getBoolean("IsMandatory"),
+                            rs.getString("Options"),
+                            rs.getInt("DisplayOrder"),
+                            rs.getString("RiskFactorKey")))
                     .list();
             section.questions().addAll(questions);
         }
@@ -85,23 +93,25 @@ public class QuestionnaireRepository {
     public void saveQuestion(QuestionnaireQuestion q) {
         if (q.questionID() == null) {
             jdbcClient.sql(
-                    "INSERT INTO QuestionnaireQuestions (SectionID, QuestionText, QuestionType, IsMandatory, Options, DisplayOrder) VALUES (:sectionID, :text, :type, :mandatory, :options, :order)")
+                    "INSERT INTO QuestionnaireQuestions (SectionID, QuestionText, QuestionType, IsMandatory, Options, DisplayOrder, RiskFactorKey) VALUES (:sectionID, :text, :type, :mandatory, :options, :order, :riskKey)")
                     .param("sectionID", q.sectionID())
                     .param("text", q.questionText())
                     .param("type", q.questionType())
                     .param("mandatory", q.isMandatory())
                     .param("options", q.options())
                     .param("order", q.displayOrder())
+                    .param("riskKey", q.riskFactorKey())
                     .update();
         } else {
             jdbcClient.sql(
-                    "UPDATE QuestionnaireQuestions SET SectionID = :sectionID, QuestionText = :text, QuestionType = :type, IsMandatory = :mandatory, Options = :options, DisplayOrder = :order WHERE QuestionID = :id")
+                    "UPDATE QuestionnaireQuestions SET SectionID = :sectionID, QuestionText = :text, QuestionType = :type, IsMandatory = :mandatory, Options = :options, DisplayOrder = :order, RiskFactorKey = :riskKey WHERE QuestionID = :id")
                     .param("sectionID", q.sectionID())
                     .param("text", q.questionText())
                     .param("type", q.questionType())
                     .param("mandatory", q.isMandatory())
                     .param("options", q.options())
                     .param("order", q.displayOrder())
+                    .param("riskKey", q.riskFactorKey())
                     .param("id", q.questionID())
                     .update();
         }

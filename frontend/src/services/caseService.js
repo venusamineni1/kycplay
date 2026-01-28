@@ -43,6 +43,12 @@ export const caseService = {
         return response.json();
     },
 
+    getCaseEvents: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/${id}/events`);
+        if (!response.ok) throw new Error('Failed to fetch case events');
+        return response.json();
+    },
+
     transitionCase: async (id, action, comment) => {
         const response = await fetch(`${API_BASE_URL}/${id}/transition`, {
             method: 'POST',

@@ -16,11 +16,14 @@ public class CaseController {
     private final CaseRepository caseRepository;
     private final UserRepository userRepository;
     private final CaseService caseService;
+    private final EventService eventService;
 
-    public CaseController(CaseRepository caseRepository, UserRepository userRepository, CaseService caseService) {
+    public CaseController(CaseRepository caseRepository, UserRepository userRepository, CaseService caseService,
+            EventService eventService) {
         this.caseRepository = caseRepository;
         this.userRepository = userRepository;
         this.caseService = caseService;
+        this.eventService = eventService;
     }
 
     @GetMapping
@@ -221,5 +224,10 @@ public class CaseController {
                 .contentType(MediaType.parseMediaType(doc.mimeType()))
                 .header("Content-Disposition", "attachment; filename=\"" + doc.documentName() + "\"")
                 .body(doc.data());
+    }
+
+    @GetMapping("/{id}/events")
+    public List<CaseEvent> getCaseEvents(@PathVariable Long id) {
+        return eventService.getEventsForCase(id);
     }
 }

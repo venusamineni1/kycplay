@@ -198,7 +198,7 @@ const ClientDetails = () => {
                                 if (runningAssessment) return;
                                 setRunningAssessment(true);
                                 try {
-                                    await riskService.calculateRisk(client);
+                                    await riskService.calculateRisk(client.clientID);
                                     // Refresh history
                                     const history = await riskService.getRiskHistory(client.clientID);
                                     setRiskHistory(history);
