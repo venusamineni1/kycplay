@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { questionnaireService } from '../services/questionnaireService';
 import Button from '../components/Button';
+import { useNotification } from '../contexts/NotificationContext';
 
 const Questionnaire = ({ caseId: propCaseId, readOnly: propReadOnly }) => {
     const { id: paramCaseId } = useParams();
     const caseId = propCaseId || paramCaseId;
+    const { notify } = useNotification();
 
     const [template, setTemplate] = useState([]);
     const [responses, setResponses] = useState({});
@@ -47,10 +49,11 @@ const Questionnaire = ({ caseId: propCaseId, readOnly: propReadOnly }) => {
                 questionID: parseInt(qId),
                 answerText: responses[qId]
             }));
+
             await questionnaireService.saveResponses(caseId, payload);
-            alert('Questionnaire saved successfully');
+            notify('Questionnaire saved successfully', 'success');
         } catch (err) {
-            alert('Save failed: ' + err.message);
+            notify('Save failed: ' + err.message, 'error');
         } finally {
             setSaving(false);
         }

@@ -3,11 +3,13 @@ import { adHocTaskService } from '../services/adHocTaskService';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 import { caseService } from '../services/caseService'; // To get users list
 import { clientService } from '../services/clientService'; // To get clients list
 
 const AdHocTaskList = () => {
     const { user } = useAuth();
+    const { notify } = useNotification();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -62,7 +64,7 @@ const AdHocTaskList = () => {
     }, []);
 
     const handleCreate = async () => {
-        if (!newTask.assignee || !newTask.requestText) return alert("Assignee and Request Text are required");
+        if (!newTask.assignee || !newTask.requestText) return notify("Assignee and Request Text are required", 'warning');
         setCreating(true);
         try {
             await adHocTaskService.createTask(newTask);
@@ -77,7 +79,7 @@ const AdHocTaskList = () => {
     };
 
     const handleRespond = async () => {
-        if (!responseText) return alert("Response is required");
+        if (!responseText) return notify("Response is required", 'warning');
         setResponding(true);
         try {
             await adHocTaskService.respondTask(selectedTask.id, responseText);
@@ -98,8 +100,9 @@ const AdHocTaskList = () => {
             await adHocTaskService.completeTask(selectedTask.id);
             setSelectedTask(null);
             loadTasks();
+            notify('Task completed successfully', 'success');
         } catch (err) {
-            alert(err.message);
+            notify(err.message, 'error');
         } finally {
             setResponding(false);
         }

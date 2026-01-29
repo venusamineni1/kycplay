@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { clientService } from '../services/clientService';
 import Pagination from '../components/Pagination';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ClientDirectory = () => {
+    const { notify } = useNotification();
     const [clients, setClients] = useState([]);
     const [data, setData] = useState(null);
     const [query, setQuery] = useState('');
@@ -35,7 +37,7 @@ const ClientDirectory = () => {
         try {
             const data = await clientService.exportClients();
             if (!data || data.length === 0) {
-                alert('No data to export');
+                notify('No data to export', 'warning');
                 return;
             }
 
@@ -56,8 +58,9 @@ const ClientDirectory = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            notify('Clients exported successfully', 'success');
         } catch (err) {
-            alert('Export failed: ' + err.message);
+            notify('Export failed: ' + err.message, 'error');
         }
     };
 

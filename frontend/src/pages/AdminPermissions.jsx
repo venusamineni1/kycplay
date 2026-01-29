@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const AdminPermissions = () => {
     const { hasPermission } = useAuth();
+    const { notify } = useNotification();
     const [roles, setRoles] = useState({});
     const [allPermissions, setAllPermissions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -55,9 +57,11 @@ const AdminPermissions = () => {
             });
             if (!response.ok) throw new Error('Failed to update permissions');
             setEditingRole(null);
+            setEditingRole(null);
             fetchPermissions();
+            notify('Permissions updated successfully', 'success');
         } catch (err) {
-            alert('Update failed: ' + err.message);
+            notify('Update failed: ' + err.message, 'error');
         }
     };
 

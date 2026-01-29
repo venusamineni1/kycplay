@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import { caseService } from '../services/caseService';
+import { useNotification } from '../contexts/NotificationContext';
 
 const AdminWorkflowDashboard = () => {
+    const { notify } = useNotification();
     const [activeTab, setActiveTab] = useState('tasks');
     const [tasks, setTasks] = useState([]);
     const [processes, setProcesses] = useState([]);
@@ -36,8 +38,9 @@ const AdminWorkflowDashboard = () => {
         try {
             await caseService.terminateProcess(id);
             fetchData();
+            notify('Process terminated successfully', 'success');
         } catch (err) {
-            alert('Failed to terminate: ' + err.message);
+            notify('Failed to terminate: ' + err.message, 'error');
         }
     };
 
@@ -46,8 +49,9 @@ const AdminWorkflowDashboard = () => {
         try {
             await caseService.deleteAllTasks();
             fetchData();
+            notify('All active tasks/processes deleted', 'success');
         } catch (err) {
-            alert('Failed to delete all: ' + err.message);
+            notify('Failed to delete all: ' + err.message, 'error');
         }
     };
 

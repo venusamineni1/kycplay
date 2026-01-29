@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const AdminQuestionnaire = () => {
     const { hasPermission } = useAuth();
+    const { notify } = useNotification();
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -49,8 +51,9 @@ const AdminQuestionnaire = () => {
             if (!response.ok) throw new Error('Failed to save section');
             setSectionModal({ ...sectionModal, open: false });
             fetchQuestionnaire();
+            notify('Section saved successfully', 'success');
         } catch (err) {
-            alert('Error: ' + err.message);
+            notify('Error: ' + err.message, 'error');
         }
     };
 
@@ -60,8 +63,9 @@ const AdminQuestionnaire = () => {
             const response = await fetch(`/api/questionnaire/template/section/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete section');
             fetchQuestionnaire();
+            notify('Section deleted successfully', 'success');
         } catch (err) {
-            alert('Error: ' + err.message);
+            notify('Error: ' + err.message, 'error');
         }
     };
 
@@ -94,8 +98,9 @@ const AdminQuestionnaire = () => {
             if (!response.ok) throw new Error('Failed to save question');
             setQuestionModal({ ...questionModal, open: false });
             fetchQuestionnaire();
+            notify('Question saved successfully', 'success');
         } catch (err) {
-            alert('Error: ' + err.message);
+            notify('Error: ' + err.message, 'error');
         }
     };
 
@@ -105,8 +110,9 @@ const AdminQuestionnaire = () => {
             const response = await fetch(`/api/questionnaire/template/question/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete question');
             fetchQuestionnaire();
+            notify('Question deleted successfully', 'success');
         } catch (err) {
-            alert('Error: ' + err.message);
+            notify('Error: ' + err.message, 'error');
         }
     };
 

@@ -4,6 +4,7 @@ import { clientService } from '../services/clientService';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 import { caseService } from '../services/caseService';
 import { riskService } from '../services/riskService';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,7 @@ const formatAddress = (addr) => {
 const ClientDetails = () => {
     const { id } = useParams();
     const { hasPermission } = useAuth();
+    const { notify } = useNotification();
     const navigate = useNavigate();
     const [client, setClient] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -96,9 +98,10 @@ const ClientDetails = () => {
         try {
             const caseId = await caseService.createCase(id, caseReason);
             setIsCaseModalOpen(false);
+            notify('Case created successfully', 'success');
             navigate(`/cases/${caseId}`);
         } catch (err) {
-            alert('Failed to create case: ' + err.message);
+            notify('Failed to create case: ' + err.message, 'error');
         } finally {
             setCreatingCase(false);
         }
@@ -110,8 +113,9 @@ const ClientDetails = () => {
             setIsPartyModalOpen(false);
             setPartyData({ firstName: '', lastName: '', relationType: 'DIRECTOR', status: 'ACTIVE' });
             fetchDetails();
+            notify('Related party added', 'success');
         } catch (err) {
-            alert('Failed to add party: ' + err.message);
+            notify('Failed to add party: ' + err.message, 'error');
         }
     };
 
@@ -202,9 +206,9 @@ const ClientDetails = () => {
                                     // Refresh history
                                     const history = await riskService.getRiskHistory(client.clientID);
                                     setRiskHistory(history);
-                                    alert('Risk Assessment completed successfully');
+                                    notify('Risk Assessment completed successfully', 'success');
                                 } catch (e) {
-                                    alert('Failed to run risk assessment: ' + e.message);
+                                    notify('Failed to run risk assessment: ' + e.message, 'error');
                                 } finally {
                                     setRunningAssessment(false);
                                 }
@@ -513,7 +517,7 @@ const ClientDetails = () => {
                                             setAssessmentDetails(details);
                                             setSelectedAssessment(h);
                                         } catch (e) {
-                                            alert('Failed to load details: ' + e.message);
+                                            notify('Failed to load details: ' + e.message, 'error');
                                         }
                                     }} style={{ cursor: 'pointer' }} className="clickable-row">
                                         <td>{new Date(h.createdAt).toLocaleString()}</td>

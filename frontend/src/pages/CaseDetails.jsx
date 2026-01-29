@@ -4,10 +4,12 @@ import { caseService } from '../services/caseService';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 
 const CaseDetails = () => {
     const { id } = useParams();
     const { hasPermission, user } = useAuth();
+    const { notify } = useNotification();
     const [kycCase, setKycCase] = useState(null);
     const [comments, setComments] = useState([]);
     const [docs, setDocs] = useState([]);
@@ -65,7 +67,7 @@ const CaseDetails = () => {
     }, [id]);
 
     const handleTransition = async (action) => {
-        if (!commentInput) return alert('Comment is required for workflow actions');
+        if (!commentInput) return notify('Comment is required for workflow actions', 'warning');
         setTransitioning(true);
         setError(null);
         setSuccessMessage('');
@@ -73,10 +75,13 @@ const CaseDetails = () => {
         try {
             await caseService.transitionCase(id, action, commentInput);
             setCommentInput('');
+            setCommentInput('');
             setSuccessMessage(`Case transitioned (${action}) successfully.`);
+            notify(`Case transitioned to ${action} successfully`, 'success');
             loadCaseData();
         } catch (err) {
             console.error("Transition Error:", err);
+            notify(err.message, 'error');
             setValidationError(err.message);
         } finally {
             setTransitioning(false);
@@ -84,7 +89,7 @@ const CaseDetails = () => {
     };
 
     const handleUpload = async () => {
-        if (!uploadData.file) return alert('Please select a file');
+        if (!uploadData.file) return notify('Please select a file', 'warning');
         setUploading(true);
         try {
             const formData = new FormData();
@@ -95,9 +100,11 @@ const CaseDetails = () => {
             await caseService.uploadDocument(id, formData);
             setIsDocModalOpen(false);
             setUploadData({ file: null, category: 'IDENTIFICATION', comment: '' });
+            setUploadData({ file: null, category: 'IDENTIFICATION', comment: '' });
             loadCaseData();
+            notify('Document uploaded successfully', 'success');
         } catch (err) {
-            alert('Upload failed: ' + err.message);
+            notify('Upload failed: ' + err.message, 'error');
         } finally {
             setUploading(false);
         }
@@ -108,10 +115,11 @@ const CaseDetails = () => {
         try {
             await caseService.assignCase(id, assignee);
             setSuccessMessage(assignee ? `Case assigned to ${assignee}` : 'Case unassigned');
+            notify(assignee ? `Case assigned to ${assignee}` : 'Case unassigned', 'success');
             setIsAssignModalOpen(false);
             loadCaseData();
         } catch (err) {
-            alert('Assignment failed: ' + err.message);
+            notify('Assignment failed: ' + err.message, 'error');
         } finally {
             setAssigning(false);
         }
@@ -122,7 +130,7 @@ const CaseDetails = () => {
         // Heuristic: Status typically matches the Group Name in our simple workflow
         const role = kycCase.status;
         if (!role || role === 'APPROVED' || role === 'REJECTED') {
-            alert('Cannot assign closed or invalid cases');
+            notify('Cannot assign closed or invalid cases', 'warning');
             return;
         }
 
@@ -131,7 +139,7 @@ const CaseDetails = () => {
             setAssignableUsers(users);
             setIsAssignModalOpen(true);
         } catch (err) {
-            alert('Failed to load users: ' + err.message);
+            notify('Failed to load users: ' + err.message, 'error');
         }
     };
 

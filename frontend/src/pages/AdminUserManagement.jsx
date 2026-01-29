@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const AdminUserManagement = () => {
     const { hasPermission } = useAuth();
+    const { notify } = useNotification();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -43,15 +45,16 @@ const AdminUserManagement = () => {
             if (!response.ok) throw new Error('Failed to update role');
             setEditingUser(null);
             fetchUsers(); // Refresh list
+            notify('Role updated successfully', 'success');
         } catch (err) {
-            alert('Update failed: ' + err.message);
+            notify('Update failed: ' + err.message, 'error');
         }
     };
 
     const handleCreateUser = async () => {
         console.log("handleCreateUser called", newUser); // DEBUG
         if (!newUser.username || !newUser.password) {
-            alert("Username and password are required");
+            notify("Username and password are required", 'warning');
             return;
         }
         try {
@@ -64,9 +67,11 @@ const AdminUserManagement = () => {
 
             setIsCreateModalOpen(false);
             setNewUser({ username: '', password: '', role: 'USER' });
+            setNewUser({ username: '', password: '', role: 'USER' });
             fetchUsers();
+            notify('User created successfully', 'success');
         } catch (err) {
-            alert('Creation failed: ' + err.message);
+            notify('Creation failed: ' + err.message, 'error');
         }
     };
 
