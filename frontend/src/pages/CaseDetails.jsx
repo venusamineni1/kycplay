@@ -22,6 +22,7 @@ const CaseDetails = () => {
 
     // Modal States
     const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+
     const [uploadData, setUploadData] = useState({
         file: null, category: 'IDENTIFICATION', comment: ''
     });
