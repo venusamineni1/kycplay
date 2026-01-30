@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { clientService } from '../services/clientService';
-import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
-import Modal from '../components/Modal';
-import { useNotification } from '../contexts/NotificationContext';
-import { caseService } from '../services/caseService';
+import Modal from '../components/Modal'; // Restored Modal
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext'; // Restored useNotification
+import { caseService } from '../services/caseService'; // Restored caseService
 import { riskService } from '../services/riskService';
 import { useNavigate } from 'react-router-dom';
 import Questionnaire from './Questionnaire';
+import ScreeningPanel from '../components/ScreeningPanel';
+import { FaHistory, FaRedoAlt } from 'react-icons/fa';
 
 const Section = ({ title, children, actions }) => (
     <section className="glass-section" style={{ marginTop: '1.5rem' }}>
@@ -28,7 +30,7 @@ const DetailItem = ({ label, value }) => (
 );
 
 const formatAddress = (addr) => {
-    return `${addr.addressLine1}, ${addr.city}, ${addr.country}`;
+    return `${addr.addressLine1}, ${addr.city}, ${addr.country} `;
 };
 
 const ClientDetails = () => {
@@ -99,7 +101,7 @@ const ClientDetails = () => {
             const caseId = await caseService.createCase(id, caseReason);
             setIsCaseModalOpen(false);
             notify('Case created successfully', 'success');
-            navigate(`/cases/${caseId}`);
+            navigate(`/ cases / ${caseId} `);
         } catch (err) {
             notify('Failed to create case: ' + err.message, 'error');
         } finally {
@@ -162,15 +164,60 @@ const ClientDetails = () => {
                         justifyContent: 'center',
                         position: 'relative'
                     }}>
-                        <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                        <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '5px' }}>
                             {hasPermission('MANAGE_RISK') && (
-                                <Button variant="outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setIsRiskHistoryOpen(true)}>
-                                    🕒 History
-                                </Button>
+                                <>
+                                    <button
+                                        onClick={() => setIsRiskHistoryOpen(true)}
+                                        title="View History"
+                                        style={{
+                                            background: 'transparent',
+                                            border: '1px solid var(--glass-border)',
+                                            borderRadius: '4px',
+                                            color: 'var(--text-primary)',
+                                            cursor: 'pointer',
+                                            padding: '4px 8px',
+                                            fontSize: '1.2rem'
+                                        }}
+                                    >
+                                        🕒
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (runningAssessment) return;
+                                            setRunningAssessment(true);
+                                            try {
+                                                await riskService.calculateRisk(client.clientID);
+                                                // Refresh history
+                                                const history = await riskService.getRiskHistory(client.clientID);
+                                                setRiskHistory(history);
+                                                notify('Risk Assessment completed successfully', 'success');
+                                            } catch (e) {
+                                                notify('Failed to run risk assessment: ' + e.message, 'error');
+                                            } finally {
+                                                setRunningAssessment(false);
+                                            }
+                                        }}
+                                        disabled={runningAssessment}
+                                        title="Run Risk Assessment"
+                                        style={{
+                                            background: 'transparent',
+                                            border: '1px solid var(--glass-border)',
+                                            borderRadius: '4px',
+                                            color: 'var(--text-primary)',
+                                            cursor: 'pointer',
+                                            padding: '4px 8px',
+                                            fontSize: '1.2rem',
+                                            opacity: runningAssessment ? 0.5 : 1
+                                        }}
+                                    >
+                                        ▶️
+                                    </button>
+                                </>
                             )}
                         </div>
 
-                        <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>Current Risk</h4>
+                        <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>Risk Pulse</h4>
 
                         {riskHistory.length > 0 ? (
                             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -197,26 +244,13 @@ const ClientDetails = () => {
                             </div>
                         )}
 
-                        {hasPermission('MANAGE_RISK') && (
-                            <Button onClick={async () => {
-                                if (runningAssessment) return;
-                                setRunningAssessment(true);
-                                try {
-                                    await riskService.calculateRisk(client.clientID);
-                                    // Refresh history
-                                    const history = await riskService.getRiskHistory(client.clientID);
-                                    setRiskHistory(history);
-                                    notify('Risk Assessment completed successfully', 'success');
-                                } catch (e) {
-                                    notify('Failed to run risk assessment: ' + e.message, 'error');
-                                } finally {
-                                    setRunningAssessment(false);
-                                }
-                            }} style={{ width: '100%' }} disabled={runningAssessment}>
-                                {runningAssessment ? 'Running...' : 'Run Assessment'}
-                            </Button>
-                        )}
                     </div>
+
+                    {/* Screening Panel */}
+                    <ScreeningPanel
+                        clientId={client.clientID}
+                        hasPermission={hasPermission('MANAGE_SCREENING') || hasPermission('MANAGE_RISK')} // Use existing permission or new one
+                    />
                 </div>
             </Section>
 
@@ -365,7 +399,7 @@ const ClientDetails = () => {
                                     <td><span className="status-badge">{c.status}</span></td>
                                     <td>{c.createdDate}</td>
                                     <td>
-                                        <Link to={`/cases/${c.caseID}`} className="btn btn-secondary">View Case</Link>
+                                        <Link to={`/ cases / ${c.caseID} `} className="btn btn-secondary">View Case</Link>
                                     </td>
                                 </tr>
                             ))}
@@ -457,7 +491,7 @@ const ClientDetails = () => {
                     setSelectedAssessment(null);
                     setAssessmentDetails([]);
                 }}
-                title={selectedAssessment ? `Assessment Details (${new Date(selectedAssessment.createdAt).toLocaleDateString()})` : "Risk Assessment History"}
+                title={selectedAssessment ? `Assessment Details(${new Date(selectedAssessment.createdAt).toLocaleDateString()})` : "Risk Assessment History"}
                 maxWidth="800px"
             >
                 {selectedAssessment ? (
@@ -522,7 +556,7 @@ const ClientDetails = () => {
                                     }} style={{ cursor: 'pointer' }} className="clickable-row">
                                         <td>{new Date(h.createdAt).toLocaleString()}</td>
                                         <td>{h.overallRiskScore}</td>
-                                        <td><span className={`status-badge ${h.overallRiskLevel === 'HIGH' ? 'rejected' : h.overallRiskLevel === 'MEDIUM' ? 'pending' : 'active'}`}>{h.overallRiskLevel}</span></td>
+                                        <td><span className={`status - badge ${h.overallRiskLevel === 'HIGH' ? 'rejected' : h.overallRiskLevel === 'MEDIUM' ? 'pending' : 'active'} `}>{h.overallRiskLevel}</span></td>
                                         <td>{h.initialRiskLevel}</td>
                                     </tr>
                                 ))}
@@ -639,7 +673,7 @@ const ClientDetails = () => {
             <Modal
                 isOpen={!!viewQuestionnaireCaseId}
                 onClose={() => setViewQuestionnaireCaseId(null)}
-                title={`Questionnaire (Case #${viewQuestionnaireCaseId})`}
+                title={`Questionnaire(Case #${viewQuestionnaireCaseId})`}
                 maxWidth="900px"
             >
                 {viewQuestionnaireCaseId && (
